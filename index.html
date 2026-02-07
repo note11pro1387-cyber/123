@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MR NEON | تیم برنامه‌نویسی وب حرفه‌ای | طراحی سایت در ۷۲ ساعت</title>
+    <meta name="description" content="تیم MR NEON - طراحی و توسعه وب‌سایت‌های حرفه‌ای با تحویل ۷۲ ساعته، طراحی UI/UX اختصاصی، فروشگاه اینترنتی و سایت شرکتی">
+    <meta name="keywords" content="طراحی سایت, برنامه‌نویسی وب, فروشگاه اینترنتی, UI/UX, طراحی واکنش‌گرا, سئو, تیم برنامه‌نویسی">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="MR NEON | تیم برنامه‌نویسی وب حرفه‌ای">
+    <meta property="og:description" content="طراحی و توسعه وب‌سایت در کمتر از ۷۲ ساعت با کیفیت عالی">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mrneon.dev">
+    <meta property="og:image" content="https://mrneon.dev/assets/images/og-image.jpg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💠</text></svg>">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="script.js" as="script">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="neon-loader"></div>
+            <div class="loading-text">MR•NEON</div>
+        </div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" aria-label="بازگشت به بالا">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 19V5M12 5L5 12M12 5L19 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
+
+    <!-- SECTION 1: Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="#hero" class="logo">
+                    <span class="logo-text">MR•NEON</span>
+                    <span class="logo-dot"></span>
+                </a>
+            </div>
+
+            <div class="nav-menu" id="navMenu">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="#hero" class="nav-link active" data-nav="home">خانه</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#services" class="nav-link" data-nav="services">خدمات</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#portfolio" class="nav-link" data-nav="portfolio">نمونه‌کارها</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#team" class="nav-link" data-nav="team">تیم ما</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#tech" class="nav-link" data-nav="tech">تکنولوژی‌ها</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#contact" class="nav-link" data-nav="contact">تماس با ما</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-actions">
+                <a href="#contact" class="btn btn-primary btn-neon">
+                    <span>شروع پروژه</span>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3.33301 10H16.6663M16.6663 10L10.833 4.16667M16.6663 10L10.833 15.8333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </div>
+
+            <button class="hamburger" id="hamburger" aria-label="منو" aria-expanded="false">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- SECTION 2: Hero -->
+    <section class="hero" id="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-text">تیم توسعه وب حرفه‌ای</span>
+                    <div class="badge-glow"></div>
+                </div>
+
+                <h1 class="hero-title">
+                    <span class="title-line">سایت کسب‌وکارتان را</span>
+                    <span class="title-line highlight">
+                        <span class="highlight-text">در کمتر از ۷۲ ساعت</span>
+                        <span class="highlight-glow"></span>
+                    </span>
+                    <span class="title-line">تحویل می‌گیرید</span>
+                </h1>
+
+                <p class="hero-description">
+                    ما در تیم MR NEON با ترکیبی از خلاقیت، تخصص و فناوری‌های روز، وب‌سایت‌هایی می‌سازیم که نه تنها زیبا هستند، بلکه نتایج ملموسی برای کسب‌وکار شما به ارمغان می‌آورند.
+                </p>
+
+                <div class="hero-features">
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <span class="feature-text">تحویل ۲۴ تا ۷۲ ساعته</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <span class="feature-text">پشتیبانی فنی تا شش ماه</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <span class="feature-text">طراحی کاملاً واکنش‌گرا</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <span class="feature-text">سئو و بهینه‌سازی داخلی</span>
+                    </div>
+                </div>
+
+                <div class="hero-actions">
+                    <a href="#portfolio" class="btn btn-primary btn-lg">
+                        <span>مشاهده نمونه‌کارها</span>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4.16699 10H15.8337M15.8337 10L10.0003 4.16667M15.8337 10L10.0003 15.8333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                    <a href="#contact" class="btn btn-outline btn-lg">
+                        <span>تماس با ما</span>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.5 5.83333L9.0755 10.85C9.63533 11.2833 10.3647 11.2833 10.9245 10.85L17.5 5.83333M4.16667 15.8333H15.8333C16.7538 15.8333 17.5 15.0871 17.5 14.1667V5.83333C17.5 4.91286 16.7538 4.16667 15.8333 4.16667H4.16667C3.24619 4.16667 2.5 4.91286 2.5 5.83333V14.1667C2.5 15.0871 3.24619 15.8333 4.16667 15.8333Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="code-visual">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span class="code-dot red"></span>
+                            <span class="code-dot yellow"></span>
+                            <span class="code-dot green"></span>
+                        </div>
+                        <div class="code-title">mr-neon-website.js</div>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-javascript">
+<span class="code-line"><span class="code-keyword">class</span> <span class="code-class">MRNeonWebsite</span> {</span>
+<span class="code-line">  <span class="code-function">constructor</span>() {</span>
+<span class="code-line">    <span class="code-keyword">this</span>.<span class="code-property">deliveryTime</span> = <span class="code-string">'۷۲ ساعت'</span>;</span>
+<span class="code-line">    <span class="code-keyword">this</span>.<span class="code-property">quality</span> = <span class="code-string">'حرفه‌ای'</span>;</span>
+<span class="code-line">    <span class="code-keyword">this</span>.<span class="code-property">support</span> = <span class="code-string">'۲۴/۷'</span>;</span>
+<span class="code-line">  }</span>
+<span class="code-line"></span>
+<span class="code-line">  <span class="code-function">async</span> <span class="code-function">developWebsite</span>(<span class="code-param">requirements</span>) {</span>
+<span class="code-line">    <span class="code-keyword">const</span> website = <span class="code-keyword">await</span> <span class="code-function">this</span>.<span class="code-function">createDesign</span>();</span>
+<span class="code-line">    <span class="code-keyword">const</span> optimized = <span class="code-keyword">await</span> <span class="code-function">this</span>.<span class="code-function">optimizeSEO</span>(website);</span>
+<span class="code-line">    <span class="code-keyword">return</span> <span class="code-keyword">await</span> <span class="code-function">this</span>.<span class="code-function">deliver</span>(optimized);</span>
+<span class="code-line">  }</span>
+<span class="code-line">}</span>
+                        </code></pre>
+                    </div>
+                </div>
+                <div class="floating-elements">
+                    <div class="floating-element element-1">🚀</div>
+                    <div class="floating-element element-2">💻</div>
+                    <div class="floating-element element-3">🎨</div>
+                    <div class="floating-element element-4">⚡</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-background">
+            <div class="particles-container" id="particles"></div>
+            <div class="gradient-overlay"></div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: Stats -->
+    <section class="stats" id="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card" data-count="50" data-speed="2000">
+                    <div class="stat-number">
+                        <span class="count">0</span>
+                        <span class="plus">+</span>
+                    </div>
+                    <div class="stat-line"></div>
+                    <div class="stat-label">پروژه موفق</div>
+                </div>
+
+                <div class="stat-card" data-count="95" data-speed="2000">
+                    <div class="stat-number">
+                        <span class="count">0</span>
+                        <span class="percent">%</span>
+                    </div>
+                    <div class="stat-line"></div>
+                    <div class="stat-label">رضایت مشتری</div>
+                </div>
+
+                <div class="stat-card" data-count="24" data-speed="2000">
+                    <div class="stat-number">
+                        <span class="count">0</span>
+                        <span class="slash">/</span>
+                        <span class="count">7</span>
+                    </div>
+                    <div class="stat-line"></div>
+                    <div class="stat-label">پشتیبانی</div>
+                </div>
+
+                <div class="stat-card" data-count="72" data-speed="2000">
+                    <div class="stat-number">
+                        <span class="count">0</span>
+                    </div>
+                    <div class="stat-line"></div>
+                    <div class="stat-label">ساعت تحویل</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: Services -->
+    <section class="services" id="services">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">خدمات ما</h2>
+                <div class="section-line">
+                    <div class="line-glow"></div>
+                </div>
+                <p class="section-description">خدمات تخصصی ما برای کسب‌وکار شما</p>
+            </div>
+
+            <div class="services-grid">
+                <!-- Service 1 -->
+                <div class="service-card">
+                    <div class="service-icon">🛒</div>
+                    <h3 class="service-title">فروشگاه اینترنتی</h3>
+                    <p class="service-description">طراحی کامل سیستم فروش با درگاه پرداخت، مدیریت محصولات و گزارش‌گیری حرفه‌ای</p>
+                    <div class="service-neon-line"></div>
+                </div>
+
+                <!-- Service 2 -->
+                <div class="service-card">
+                    <div class="service-icon">🏢</div>
+                    <h3 class="service-title">سایت شرکتی</h3>
+                    <p class="service-description">طراحی پروفایل حرفه‌ای برای معرفی خدمات، تیم و نمونه‌کارهای شرکت</p>
+                    <div class="service-neon-line"></div>
+                </div>
+
+                <!-- Service 3 -->
+                <div class="service-card">
+                    <div class="service-icon">🎨</div>
+                    <h3 class="service-title">طراحی UI/UX اختصاصی</h3>
+                    <p class="service-description">طراحی رابط کاربری منحصر به فرد با تمرکز بر تجربه کاربری و زیبایی بصری</p>
+                    <div class="service-neon-line"></div>
+                </div>
+
+                <!-- Service 4 -->
+                <div class="service-card">
+                    <div class="service-icon">⚡</div>
+                    <h3 class="service-title">بهینه‌سازی سرعت و سئو</h3>
+                    <p class="service-description">بهبود عملکرد سایت و بهینه‌سازی برای موتورهای جستجو جهت رتبه‌بندی بهتر</p>
+                    <div class="service-neon-line"></div>
+                </div>
+
+                <!-- Service 5 -->
+                <div class="service-card">
+                    <div class="service-icon">🔧</div>
+                    <h3 class="service-title">پشتیبانی و نگهداری</h3>
+                    <p class="service-description">خدمات نگهداری مستمر، بروزرسانی امنیتی و پشتیبانی فنی</p>
+                    <div class="service-neon-line"></div>
+                </div>
+
+                <!-- Service 6 -->
+                <div class="service-card">
+                    <div class="service-icon">📱</div>
+                    <h3 class="service-title">طراحی واکنش‌گرا</h3>
+                    <p class="service-description">سازگاری کامل سایت با تمام دستگاه‌های موبایل، تبلت و دسکتاپ</p>
+                    <div class="service-neon-line"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: Portfolio -->
+    <section class="portfolio" id="portfolio">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">نمونه‌کارهای ما</h2>
+                <div class="section-line">
+                    <div class="line-glow"></div>
+                </div>
+                <p class="section-description">پروژه‌هایی که با افتخار انجام داده‌ایم</p>
+            </div>
+
+            <div class="portfolio-filters" id="portfolioFilters">
+                <button class="filter-btn active" data-filter="all">همه</button>
+                <button class="filter-btn" data-filter="ecommerce">فروشگاهی</button>
+                <button class="filter-btn" data-filter="corporate">شرکتی</button>
+                <button class="filter-btn" data-filter="webapp">وب‌اپ</button>
+                <button class="filter-btn" data-filter="uiux">UI/UX</button>
+                <button class="filter-btn" data-filter="other">سایر</button>
+            </div>
+
+            <div class="portfolio-grid" id="portfolioGrid">
+                <!-- Project 1 -->
+                <div class="portfolio-card" data-category="ecommerce">
+                    <div class="portfolio-image">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='280' viewBox='0 0 400 280'%3E%3Crect width='400' height='280' fill='%230FA3B1'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-family='Vazir' font-size='24' fill='white'%3Eفروشگاه مد و زیبایی%3C/text%3E%3C/svg%3E" 
+                             alt="فروشگاه مد و زیبایی" loading="lazy">
+                        <div class="portfolio-overlay">
+                            <div class="overlay-content">
+                                <h3 class="overlay-title">فروشگاه مد و زیبایی</h3>
+                                <span class="overlay-category">🛒 فروشگاهی</span>
+                                <p class="overlay-description">طراحی کامل فروشگاه آنلاین با سیستم مدیریت محصولات پیشرفته</p>
+                                <button class="btn btn-outline-light view-details" data-project="1">مشاهده جزئیات</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="portfolio-info">
+                        <h3 class="portfolio-item-title">فروشگاه مد و زیبایی</h3>
+                        <span class="portfolio-category">🛒 فروشگاهی</span>
+                    </div>
+                </div>
+
+                <!-- Project 2 -->
+                <div class="portfolio-card" data-category="webapp">
+                    <div class="portfolio-image">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='280' viewBox='0 0 400 280'%3E%3Crect width='400' height='280' fill='%232ECC71'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-family='Vazir' font-size='24' fill='white'%3Eپلتفرم آموزش آنلاین%3C/text%3E%3C/svg%3E" 
+                             alt="پلتفرم آموزش آنلاین" loading="lazy">
+                        <div class="portfolio-overlay">
+                            <div class="overlay-content">
+                                <h3 class="overlay-title">پلتفرم آموزش آنلاین</h3>
+                                <span class="overlay-category">📱 وب‌اپ</span>
+                                <p class="overlay-description">پلتفرم تعاملی آموزش با سیستم ویدیو، تمرین و آزمون</p>
+                                <button class="btn btn-outline-light view-details" data-project="2">مشاهده جزئیات</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="portfolio-info">
+                        <h3 class="portfolio-item-title">پلتفرم آموزش آنلاین</h3>
+                        <span class="portfolio-category">📱 وب‌اپ</span>
+                    </div>
+                </div>
+
+                <!-- Project 3 -->
+                <div class="portfolio-card" data-category="corporate">
+                    <div class="portfolio-image">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='280' viewBox='0 0 400 280'%3E%3Crect width='400' height='280' fill='%2300F5FF'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-family='Vazir' font-size='24' fill='white'%3Eسایت شرکتی فناوری%3C/text%3E%3C/svg%3E" 
+                             alt="سایت شرکتی فناوری" loading="lazy">
+                        <div class="portfolio-overlay">
+                            <div class="overlay-content">
+                                <h3 class="overlay-title">سایت شرکتی فناوری</h3>
+                                <span class="overlay-category">🏢 شرکتی</span>
+                                <p class="overlay-description">طراحی مدرن برای معرفی خدمات شرکت فناوری</p>
+                                <button class="btn btn-outline-light view-details" data-project="3">مشاهده جزئیات</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="portfolio-info">
+                        <h3 class="portfolio-item-title">سایت شرکتی فناوری</h3>
+                        <span class="portfolio-category">🏢 شرکتی</span>
+                    </div>
+                </div>
+
+                <!-- Project 4 -->
+                <div class="portfolio-card" data-category="webapp">
+                    <div class="portfolio-image">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='280' viewBox='0 0 400 280'%3E%3Crect width='400' height='280' fill='%23FF6B6B'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-family='Vazir' font-size='24' fill='white'%3Eوب‌اپ مدیریت پروژه%3C/text%3E%3C/svg%3E" 
+                             alt="وب‌اپ مدیریت پروژه" loading="lazy">
+                        <div class="portfolio-overlay">
+                            <div class="overlay-content">
+                                <h3 class="overlay-title">وب‌اپ مدیریت پروژه</h3>
+                                <span class="overlay-category">🔧 وب‌اپ</span>
+                                <p class="overlay-description">اپلیکیشن تحت وب برای مدیریت تیم و تسک‌ها</p>
+                                <button class="btn btn-outline-light view-details" data-project="4">مشاهده جزئیات</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="portfolio-info">
+                        <h3 class="portfolio-item-title">وب‌اپ مدیریت پروژه</h3>
+                        <span class="portfolio-category">🔧 وب‌اپ</span>
+                    </div>
+                </div>
+
+                <!-- Project 5 -->
+                <div class="portfolio-card" data-category="ecommerce">
+                    <div class="portfolio-image">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='280' viewBox='0 0 400 280'%3E%3Crect width='400' height='280' fill='%239B5DE5'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-family='Vazir' font-size='24' fill='white'%3Eسایت رستوران لوکس%3C/text%3E%3C/svg%3E" 
+                             alt="سایت رستوران لوکس" loading="lazy">
+                        <div class="portfolio-overlay">
+                            <div class="overlay-content">
+                                <h3 class="overlay-title">سایت رستوران لوکس</h3>
+                                <span class="overlay-category">🛒 فروشگاهی</span>
+                                <p class="overlay-description">سایت رزرو آنلاین با منوی دیجیتال و سیستم پرداخت</p>
+                                <button class="btn btn-outline-light view-details" data-project="5">مشاهده جزئیات</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="portfolio-info">
+                        <h3 class="portfolio-item-title">سایت رستوران لوکس</h3>
+                        <span class="portfolio-category">🛒 فروشگاهی</span>
+                    </div>
+                </div>
+
+                <!-- Project 6 - More Projects -->
+                <div class="portfolio-card view-more" id="viewMoreProjects">
+                    <div class="portfolio-image">
+                        <div class="view-more-content">
+                            <div class="view-more-icon">+</div>
+                            <h3 class="view-more-title">پروژه‌های بیشتر</h3>
+                            <p class="view-more-description">برای مشاهده سایر پروژه‌ها کلیک کنید</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Project Modal -->
+    <div class="modal" id="projectModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose" aria-label="بستن">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 6: Team -->
+    <section class="team" id="team">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">تیم ما</h2>
+                <div class="section-line">
+                    <div class="line-glow"></div>
+                </div>
+                <p class="section-description">متخصصانی که پروژه شما را اجرا می‌کنند</p>
+            </div>
+
+            <div class="team-grid">
+                <!-- Member 1 -->
+                <div class="team-card">
+                    <div class="team-avatar">
+                        <div class="avatar-placeholder">MJ</div>
+                        <div class="avatar-glow"></div>
+                    </div>
+                    
+                    <div class="team-info">
+                        <h3 class="team-name">محمدجواد قادری</h3>
+                        <div class="team-role">Front-end Developer</div>
+                        <p class="team-bio">تخصص در توسعه رابط‌های کاربری مدرن و تعاملی با تمرکز بر تجربه کاربری و زیبایی بصری</p>
+                        
+                        <div class="team-skills">
+                            <span class="skill-tag">React.js</span>
+                            <span class="skill-tag">Vue.js</span>
+                            <span class="skill-tag">TypeScript</span>
+                            <span class="skill-tag">UI/UX Design</span>
+                            <span class="skill-tag">Responsive Design</span>
+                        </div>
+                        
+                        <div class="team-social">
+                            <a href="#" class="social-link" aria-label="لینکدین">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M16 8C17.5913 8 19.1174 8.63214 20.2426 9.75736C21.3679 10.8826 22 12.4087 22 14V21H18V14C18 13.4696 17.7893 12.9609 17.4142 12.5858C17.0391 12.2107 16.5304 12 16 12C15.4696 12 14.9609 12.2107 14.5858 12.5858C14.2107 12.9609 14 13.4696 14 14V21H10V14C10 12.4087 10.6321 10.8826 11.7574 9.75736C12.8826 8.63214 14.4087 8 16 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M6 9H2V21H6V9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M4 6C5.10457 6 6 5.10457 6 4C6 2.89543 5.10457 2 4 2C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </a>
+                            <a href="mailto:mj@mrneon.dev" class="social-link" aria-label="ایمیل">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Member 2 -->
+                <div class="team-card">
+                    <div class="team-avatar">
+                        <div class="avatar-placeholder">AF</div>
+                        <div class="avatar-glow"></div>
+                    </div>
+                    
+                    <div class="team-info">
+                        <h3 class="team-name">آرمین فرزانه</h3>
+                        <div class="team-role">Back-end Developer</div>
+                        <p class="team-bio">تخصص در معماری سرور و پایگاه داده‌های امن و مقیاس‌پذیر با تمرکز بر عملکرد و امنیت</p>
+                        
+                        <div class="team-skills">
+                            <span class="skill-tag">Node.js</span>
+                            <span class="skill-tag">Laravel</span>
+                            <span class="skill-tag">Python</span>
+                            <span class="skill-tag">API Development</span>
+                            <span class="skill-tag">Database Design</span>
+                        </div>
+                        
+                        <div class="team-social">
+                            <a href="#" class="social-link" aria-label="لینکدین">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M16 8C17.5913 8 19.1174 8.63214 20.2426 9.75736C21.3679 10.8826 22 12.4087 22 14V21H18V14C18 13.4696 17.7893 12.9609 17.4142 12.5858C17.0391 12.2107 16.5304 12 16 12C15.4696 12 14.9609 12.2107 14.5858 12.5858C14.2107 12.9609 14 13.4696 14 14V21H10V14C10 12.4087 10.6321 10.8826 11.7574 9.75736C12.8826 8.63214 14.4087 8 16 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M6 9H2V21H6V9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M4 6C5.10457 6 6 5.10457 6 4C6 2.89543 5.10457 2 4 2C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </a>
+                            <a href="mailto:armin@mrneon.dev" class="social-link" aria-label="ایمیل">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 7: Tech Stack -->
+    <section class="tech-stack" id="tech">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">تکنولوژی‌هایی که استفاده می‌کنیم</h2>
+                <div class="section-line">
+                    <div class="line-glow"></div>
+                </div>
+                <p class="section-description">ابزارها و فریمورک‌های روز دنیا</p>
+            </div>
+
+            <div class="marquee-container">
+                <div class="marquee-track" id="marqueeTrack">
+                    <div class="marquee-item">
+                        <div class="tech-icon">⚛️</div>
+                        <span class="tech-name">React</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">🟢</div>
+                        <span class="tech-name">Vue.js</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">▲</div>
+                        <span class="tech-name">Next.js</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">📘</div>
+                        <span class="tech-name">TypeScript</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">𝐉</div>
+                        <span class="tech-name">JavaScript</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">🅷</div>
+                        <span class="tech-name">HTML5</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">🅲</div>
+                        <span class="tech-name">CSS3</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">🎨</div>
+                        <span class="tech-name">Tailwind CSS</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">B</div>
+                        <span class="tech-name">Bootstrap</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">⬢</div>
+                        <span class="tech-name">Node.js</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">🚂</div>
+                        <span class="tech-name">Express.js</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">🐍</div>
+                        <span class="tech-name">Python</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">D</div>
+                        <span class="tech-name">Django</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">L</div>
+                        <span class="tech-name">Laravel</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">🐘</div>
+                        <span class="tech-name">PHP</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">🍃</div>
+                        <span class="tech-name">MongoDB</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">🐘</div>
+                        <span class="tech-name">PostgreSQL</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">🗃️</div>
+                        <span class="tech-name">MySQL</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">🐳</div>
+                        <span class="tech-name">Docker</span>
+                    </div>
+                    <div class="marquee-item">
+                        <div class="tech-icon">📦</div>
+                        <span class="tech-name">Git</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 8: Contact -->
+    <section class="contact" id="contact">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">آماده شروع پروژه‌اید؟</h2>
+                <div class="section-line">
+                    <div class="line-glow"></div>
+                </div>
+                <p class="section-description">با ما در تماس باشید تا در مورد پروژه شما صحبت کنیم</p>
+            </div>
+
+            <div class="contact-grid">
+                <!-- Contact Info -->
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <div class="contact-icon">📧</div>
+                        <div class="contact-details">
+                            <div class="contact-label">ایمیل</div>
+                            <div class="contact-value">contact@mrneon.dev</div>
+                        </div>
+                        <button class="copy-btn" data-text="contact@mrneon.dev" data-type="ایمیل">
+                            <span>کپی</span>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M3.33333 10H2.66667C2.29848 10 2 9.70152 2 9.33333V2.66667C2 2.29848 2.29848 2 2.66667 2H9.33333C9.70152 2 10 2.29848 10 2.66667V3.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="contact-item">
+                        <div class="contact-icon">💬</div>
+                        <div class="contact-details">
+                            <div class="contact-label">تلگرام</div>
+                            <div class="contact-value">@MR_NEON_TEAM</div>
+                        </div>
+                        <div class="contact-actions">
+                            <button class="copy-btn" data-text="@MR_NEON_TEAM" data-type="آیدی تلگرام">
+                                <span>کپی آیدی</span>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M3.33333 10H2.66667C2.29848 10 2 9.70152 2 9.33333V2.66667C2 2.29848 2.29848 2 2.66667 2H9.33333C9.70152 2 10 2.29848 10 2.66667V3.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <button class="telegram-btn" id="telegramBtn">
+                                <span>ارسال پیام در تلگرام</span>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10 2L14 6L10 10M14 6H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="contact-form">
+                    <form id="contactForm" novalidate>
+                        <div class="form-group">
+                            <label for="name" class="form-label">نام و نام خانوادگی *</label>
+                            <input type="text" id="name" name="name" class="form-input" required>
+                            <div class="form-error" id="nameError"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">آدرس ایمیل *</label>
+                            <input type="email" id="email" name="email" class="form-input" required>
+                            <div class="form-error" id="emailError"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="projectType" class="form-label">موضوع پروژه *</label>
+                            <select id="projectType" name="projectType" class="form-input" required>
+                                <option value="">انتخاب کنید</option>
+                                <option value="ecommerce">فروشگاهی</option>
+                                <option value="corporate">شرکتی</option>
+                                <option value="webapp">وب‌اپ</option>
+                                <option value="uiux">UI/UX</option>
+                                <option value="other">سایر</option>
+                            </select>
+                            <div class="form-error" id="projectTypeError"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message" class="form-label">پیام شما *</label>
+                            <textarea id="message" name="message" class="form-textarea" rows="4" required minlength="20"></textarea>
+                            <div class="form-error" id="messageError"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                            <span class="btn-text">ارسال پیام</span>
+                            <div class="btn-loader" id="submitLoader">
+                                <div class="loader-spinner"></div>
+                            </div>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Notification Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">MR•NEON</div>
+                    <p class="footer-tagline">تیم برنامه‌نویسی وب حرفه‌ای</p>
+                </div>
+
+                <div class="footer-social">
+                    <a href="https://t.me/MR_NEON_TEAM" class="social-link" target="_blank" rel="noopener" aria-label="تلگرام">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21.5 3L2.5 10L9.5 13.5L15.5 8.5L10.5 14.5L18.5 21L21.5 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                    <a href="mailto:contact@mrneon.dev" class="social-link" aria-label="ایمیل">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="social-link" aria-label="لینکدین">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 8C17.5913 8 19.1174 8.63214 20.2426 9.75736C21.3679 10.8826 22 12.4087 22 14V21H18V14C18 13.4696 17.7893 12.9609 17.4142 12.5858C17.0391 12.2107 16.5304 12 16 12C15.4696 12 14.9609 12.2107 14.5858 12.5858C14.2107 12.9609 14 13.4696 14 14V21H10V14C10 12.4087 10.6321 10.8826 11.7574 9.75736C12.8826 8.63214 14.4087 8 16 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M6 9H2V21H6V9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M4 6C5.10457 6 6 5.10457 6 4C6 2.89543 5.10457 2 4 2C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </div>
+
+                <div class="footer-links">
+                    <a href="#hero" class="footer-link">خانه</a>
+                    <a href="#services" class="footer-link">خدمات</a>
+                    <a href="#portfolio" class="footer-link">نمونه‌کارها</a>
+                    <a href="#contact" class="footer-link">تماس با ما</a>
+                </div>
+
+                <div class="footer-copyright">
+                    <p>© ۱۴۰۳ - کلیه حقوق محفوظ است</p>
+                    <p class="copyright-love">طراحی شده توسط تیم MR NEON</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+<!-- Floating Contact Widget -->
+<div class="floating-contact" id="floatingContact">
+    <!-- Main Floating Button -->
+    <button class="floating-contact-btn" id="floatingContactBtn" aria-label="اطلاعات تماس">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="contact-icon-phone">
+            <path d="M20 10.999H22C22 5.869 18.127 2 12.99 2V4C17.052 4 20 6.943 20 10.999Z" fill="currentColor"/>
+            <path d="M13 8C14.103 8 15 8.897 15 10V11C15 12.103 14.103 13 13 13H11C9.897 13 9 12.103 9 11V10C9 8.897 9.897 8 11 8H13ZM11 10V11H13V10H11Z" fill="currentColor"/>
+            <path d="M20.292 3.707L18.292 1.707C17.902 1.317 17.902 0.684 18.292 0.293C18.684 -0.098 19.317 -0.098 19.707 0.293L22.707 3.293C23.098 3.684 23.098 4.317 22.707 4.707L20.707 6.707C20.512 6.902 20.256 7 20 7C19.744 7 19.488 6.902 19.293 6.707C18.902 6.316 18.902 5.684 19.293 5.293L20.292 3.707Z" fill="currentColor"/>
+            <path d="M2.584 18.968C4.154 21.682 7.768 23.986 12.01 24C12.012 24 12.014 24 12.016 24C12.552 24 13 23.552 13 23C13 22.996 13 20 13 20C13 19.448 12.552 19 12 19C10.657 19 9.498 19.281 8.47 19.685C6.971 18.837 5.467 17.577 4.377 16.023C3.092 14.187 2.434 12.149 2.249 10.294C2.248 10.284 2.247 10.274 2.246 10.264C2.134 8.956 2.305 7.722 2.668 6.586C2.796 6.174 2.543 5.742 2.122 5.656C1.701 5.57 1.318 5.859 1.213 6.269C0.794 7.602 0.596 9.04 0.724 10.54C0.936 12.556 1.673 14.768 3.083 16.803C4.286 18.539 5.926 19.933 7.583 20.862C6.729 22.187 5.299 23.335 3.598 23.826C3.189 23.946 2.975 24.391 3.095 24.8C3.186 25.113 3.476 25.319 3.792 25.319C3.875 25.319 3.958 25.307 4.04 25.282C6.016 24.686 7.709 23.451 8.843 21.991C9.089 21.675 9.052 21.227 8.76 20.954C8.468 20.682 8.016 20.657 7.693 20.897C7.655 20.925 5.076 22.889 2.584 18.968Z" fill="currentColor"/>
+        </svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="contact-icon-close">
+            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
+    
+    <!-- Contact Panel -->
+    <div class="contact-panel" id="contactPanel">
+        <div class="contact-panel-header">
+            <h3 class="contact-panel-title">راه‌های ارتباطی</h3>
+            <p class="contact-panel-subtitle">ما در دسترس هستیم</p>
+        </div>
+        
+        <div class="contact-panel-body">
+            <!-- Email -->
+            <div class="contact-panel-item">
+                <div class="contact-panel-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="contact-panel-content">
+                    <div class="contact-panel-label">ایمیل</div>
+                    <a href="mailto:contact@mrneon.dev" class="contact-panel-value">contact@mrneon.dev</a>
+                </div>
+                <button class="contact-panel-copy" data-text="contact@mrneon.dev">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M3.33333 10H2.66667C2.29848 10 2 9.70152 2 9.33333V2.66667C2 2.29848 2.29848 2 2.66667 2H9.33333C9.70152 2 10 2.29848 10 2.66667V3.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Telegram -->
+            <div class="contact-panel-item">
+                <div class="contact-panel-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21.5 3L2.5 10L9.5 13.5L15.5 8.5L10.5 14.5L18.5 21L21.5 3Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="contact-panel-content">
+                    <div class="contact-panel-label">تلگرام</div>
+                    <div class="contact-panel-value">@MR_NEON_TEAM</div>
+                </div>
+                <button class="contact-panel-copy" data-text="@MR_NEON_TEAM">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M3.33333 10H2.66667C2.29848 10 2 9.70152 2 9.33333V2.66667C2 2.29848 2.29848 2 2.66667 2H9.33333C9.70152 2 10 2.29848 10 2.66667V3.33333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Quick Contact Button -->
+            <a href="#contact" class="contact-panel-action">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>ارسال پیام سریع</span>
+            </a>
+            
+            <!-- Quick Call Action -->
+            <button class="contact-panel-action" id="quickCallBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15.05 5A5 5 0 0 1 19 8.95M15.05 1A9 9 0 0 1 23 8.94m-1 7.98v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>درخواست تماس</span>
+            </button>
+        </div>
+        
+        <div class="contact-panel-footer">
+            <p>پاسخگویی ۲۴/۷</p>
+        </div>
+    </div>
+    
+    <!-- Glow Effect -->
+    <div class="contact-glow"></div>
+</div>
+</body>
+</html>
