@@ -1,0 +1,224 @@
+<!--
+  🧬 MR NEON ARCHITECTURE COMPONENT
+  📄 File: components/neo-modal.html
+  🎯 Responsibility: دستیار هوشمند NEO، رسید و مودال تشکر
+  🔌 Dependencies: css/components.css, js/neo.js (از طریق app.js)
+  🚫 Constraints: Do NOT change IDs or DOM structure. JS relies on them.
+-->
+<button
+  type="button"
+  class="neo-chat-bubble"
+  id="neoChatBubble"
+  aria-label="دستیار هوشمند نیو"
+  aria-expanded="false"
+>
+  <span class="bubble-content">
+    <span class="bubble-avatar">🤖</span>
+    <span class="bubble-text">سوالی داری؟</span>
+  </span>
+  <span class="bubble-ripple"></span>
+</button>
+
+<div
+  class="neo-chat-modal"
+  id="neoChatModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="neoChatTitle"
+>
+  <div class="chat-modal-backdrop" id="neoChatBackdrop"></div>
+  <div class="chat-modal-container">
+    <header class="chat-modal-header">
+      <div class="chat-avatar-group">
+        <div class="chat-avatar">
+          <span>🤖</span>
+          <div class="avatar-pulse"></div>
+        </div>
+        <div class="chat-info">
+          <h2 id="neoChatTitle">دستیار هوشمند نیو</h2>
+          <p>پروژه‌ات رو در ۵ دقیقه تعریف کن!</p>
+        </div>
+      </div>
+      <div class="chat-header-actions">
+        <div class="progress-ring">
+          <svg viewBox="0 0 36 36">
+            <circle
+              class="progress-bg"
+              cx="18"
+              cy="18"
+              r="15.9155"
+              fill="none"
+              stroke="rgba(255,255,255,0.1)"
+              stroke-width="3"
+            />
+            <circle
+              class="progress-fill"
+              id="neoProgressRing"
+              cx="18"
+              cy="18"
+              r="15.9155"
+              fill="none"
+              stroke="url(#neoGradient)"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-dasharray="0,100"
+            />
+          </svg>
+          <span class="progress-text" id="neoProgressText">0%</span>
+        </div>
+        <button
+          type="button"
+          class="chat-close-btn"
+          id="neoChatCloseBtn"
+          aria-label="بستن"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            aria-hidden="true"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </header>
+    <main class="chat-modal-body" id="neoChatBody"></main>
+    <footer class="chat-modal-footer">
+      <div class="step-indicator" id="neoStepInfo">مرحله ۰ از ۱۰</div>
+      <div class="footer-actions">
+        <button
+          type="button"
+          class="chat-btn chat-btn-secondary"
+          id="neoPrevBtn"
+          disabled
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          <span>قبلی</span>
+        </button>
+        <button type="button" class="chat-btn chat-btn-primary" id="neoNextBtn">
+          <span>شروع کنید</span>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<svg class="neo-svg-defs" style="position: absolute; width: 0; height: 0">
+  <defs>
+    <linearGradient id="neoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color: #0d9488" />
+      <stop offset="100%" style="stop-color: #06b6d4" />
+    </linearGradient>
+  </defs>
+</svg>
+
+<div
+  class="thank-you-modal"
+  id="thankYouModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="thankYouTitle"
+  hidden
+>
+  <div class="thank-you-backdrop"></div>
+  <div class="thank-you-container">
+    <div class="thank-you-icon">🎉</div>
+    <h2 id="thankYouTitle">سپاسگزاریم از شما!</h2>
+    <p class="thank-you-text">
+      درخواست شما با موفقیت ثبت شد.<br />
+      برای مشاهدهٔ وضعیت و جزئیات درخواست خود می‌توانید به پنل کاربری مراجعه
+      کنید.
+    </p>
+    <div class="tracking-code-box">
+      <div class="tracking-label">کد پیگیری:</div>
+      <div class="tracking-value" id="thankYouTrackingCode"></div>
+      <button class="copy-tracking-btn" id="thankYouCopyBtn">📋 کپی کد</button>
+    </div>
+    <div class="thank-you-actions">
+      <button class="btn btn-primary btn-block" id="goToPanelBtn">
+        🏠 رفتن به پنل کاربری
+      </button>
+      <button class="btn btn-outline btn-block" id="viewReceiptBtn">
+        📄 مشاهده رسید
+      </button>
+    </div>
+  </div>
+</div>
+
+<div
+  class="receipt-modal"
+  id="receiptModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="receiptTitle"
+>
+  <div class="receipt-overlay" id="receiptOverlay"></div>
+  <div class="receipt-container" id="receiptContainer">
+    <div class="receipt-header">
+      <div class="receipt-logo">MR•NEON</div>
+      <h3 id="receiptTitle">🧾 رسید ثبت پروژه</h3>
+      <button
+        type="button"
+        class="receipt-close"
+        id="receiptClose"
+        aria-label="بستن"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="receipt-body" id="receiptBody"></div>
+    <div class="receipt-footer">
+      <button type="button" class="btn btn-outline btn-sm" id="receiptCopyBtn">
+        📋 کپی کد پیگیری
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" id="receiptShareBtn">
+        📤 اشتراک‌گذاری
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        id="receiptDownloadBtn"
+      >
+        📥 دانلود عکس
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" id="receiptPrintBtn">
+        🖨️ چاپ
+      </button>
+    </div>
+  </div>
+</div>

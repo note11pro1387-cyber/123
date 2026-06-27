@@ -1,0 +1,259 @@
+<!--
+  🧬 MR NEON ARCHITECTURE COMPONENT
+  📄 File: components/admin-modal.html
+  🎯 Responsibility: مودال‌های مدیریتی (ورود ادمین، پنل داده، پنل کاربری)
+  🔌 Dependencies: css/components.css, js/auth.js, js/admin.js (از طریق app.js)
+  🚫 Constraints: Do NOT change IDs or DOM structure. JS relies on them.
+-->
+<div
+  class="admin-login-modal"
+  id="adminLoginModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="adminLoginTitle"
+>
+  <div class="admin-modal-overlay" id="adminModalOverlay"></div>
+  <div class="admin-modal-container">
+    <div class="admin-modal-header">
+      <h3 id="adminLoginTitle">ورود به پنل مدیریت</h3>
+      <button
+        type="button"
+        class="admin-modal-close"
+        id="adminModalClose"
+        aria-label="بستن"
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="admin-modal-body" id="adminModalBody">
+      <form id="adminLoginForm">
+        <div class="form-group">
+          <label for="adminUsername" class="form-label">نام کاربری</label
+          ><input
+            type="text"
+            id="adminUsername"
+            name="username"
+            class="form-input"
+            required
+            autocomplete="username"
+          />
+        </div>
+        <div class="form-group">
+          <label for="adminPassword" class="form-label">رمز عبور</label
+          ><input
+            type="password"
+            id="adminPassword"
+            name="password"
+            class="form-input"
+            required
+            autocomplete="current-password"
+          />
+        </div>
+        <div class="form-group" style="margin-top: 24px">
+          <button type="submit" class="btn btn-primary btn-block">ورود</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div
+  class="admin-data-modal"
+  id="adminDataModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="adminDataTitle"
+>
+  <div class="admin-modal-overlay" id="adminDataOverlay"></div>
+  <div class="admin-data-container">
+    <header class="admin-data-header">
+      <h3 id="adminDataTitle">📊 پنل مدیریت - درخواست‌های ثبت‌شده</h3>
+      <div class="admin-data-header-actions">
+        <button id="adminLogoutBtn" class="btn btn-outline btn-sm">
+          🚪 خروج
+        </button>
+        <button
+          type="button"
+          class="admin-modal-close"
+          id="adminDataClose"
+          aria-label="بستن"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </header>
+    <div class="admin-dashboard-metrics" id="adminMetrics">
+      <div class="metric-card metric-users">
+        <div class="metric-icon">👥</div>
+        <div class="metric-value" id="metricTotalUsers">0</div>
+        <div class="metric-label">کل کاربران ثبت‌نامی</div>
+      </div>
+      <div class="metric-card metric-pending">
+        <div class="metric-icon">⏳</div>
+        <div class="metric-value" id="metricPending">0</div>
+        <div class="metric-label">در انتظار بررسی</div>
+      </div>
+      <div class="metric-card metric-progress">
+        <div class="metric-icon">⚙️</div>
+        <div class="metric-value" id="metricInProgress">0</div>
+        <div class="metric-label">در حال انجام</div>
+      </div>
+      <div class="metric-card metric-completed">
+        <div class="metric-icon">✅</div>
+        <div class="metric-value" id="metricCompleted">0</div>
+        <div class="metric-label">تکمیل شده</div>
+      </div>
+    </div>
+    <div class="admin-data-filters">
+      <input
+        type="text"
+        id="adminSearchInput"
+        class="form-input"
+        placeholder="🔍 جستجو در نام، کد پیگیری، ایمیل..."
+      />
+      <select id="adminFilterStatus" class="form-input form-select">
+        <option value="all">همه وضعیت‌ها</option>
+        <option value="new">جدید</option>
+        <option value="read">خوانده‌شده</option>
+        <option value="replied">پاسخ‌داده‌شده</option>
+      </select>
+      <select id="adminFilterType" class="form-input form-select">
+        <option value="all">همه نوع پروژه</option>
+        <option value="ecommerce">فروشگاهی</option>
+        <option value="corporate">شرکتی</option>
+        <option value="webapp">وب‌اپ</option>
+        <option value="portfolio">نمونه‌کار</option>
+        <option value="personal">شخصی</option>
+      </select>
+      <button type="button" class="btn btn-outline" id="adminExportBtn">
+        📥 خروجی اکسل (CSV)
+      </button>
+    </div>
+    <div class="admin-data-table-wrap">
+      <table class="admin-data-table" id="adminDataTable">
+        <thead>
+          <tr>
+            <th>کد پیگیری</th>
+            <th>نام</th>
+            <th>نوع پروژه</th>
+            <th>تاریخ</th>
+            <th>وضعیت/پیشرفت</th>
+            <th>یادداشت کاربر</th>
+            <th>یادداشت ادمین</th>
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody id="adminDataTbody"></tbody>
+      </table>
+    </div>
+    <div class="admin-data-pagination" id="adminPagination"></div>
+  </div>
+</div>
+
+<div class="user-panel-modal" id="userPanelModal" hidden>
+  <div class="user-panel-backdrop"></div>
+  <div class="user-panel-container">
+    <button class="panel-close" aria-label="بستن">&times;</button>
+    <div class="user-panel-header">
+      <div class="user-info">
+        <div class="user-avatar">👤</div>
+        <div>
+          <h2 id="userPanelName">نام کاربر</h2>
+          <p id="userPanelUsername">@username</p>
+        </div>
+      </div>
+      <button id="userLogoutBtn" class="btn btn-outline btn-sm">🚪 خروج</button>
+    </div>
+    <div class="user-panel-stats">
+      <div class="stat-box">
+        <div class="stat-number" id="activeProjectsCount">0</div>
+        <div class="stat-label">پروژه فعال</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" id="completedProjectsCount">0</div>
+        <div class="stat-label">تکمیل شده</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number">3</div>
+        <div class="stat-label">حداکثر مجاز</div>
+      </div>
+    </div>
+    <div class="user-panel-tabs">
+      <button class="tab-btn active" data-tab="projects">
+        📋 پروژه‌های من
+      </button>
+      <button class="tab-btn" data-tab="settings">⚙️ تنظیمات حساب</button>
+      <button class="tab-btn" data-tab="notifications">
+        🔔 اعلان‌ها <span class="badge" id="notifBadge" hidden>0</span>
+      </button>
+    </div>
+    <div class="user-panel-content">
+      <div class="tab-content active" id="projectsTab">
+        <div class="projects-list" id="userProjectsList"></div>
+        <button
+          class="btn btn-primary btn-block"
+          id="newProjectBtn"
+          style="margin-top: 20px"
+        >
+          ➕ ثبت پروژه جدید
+        </button>
+      </div>
+      <div class="tab-content" id="settingsTab">
+        <form id="userSettingsForm">
+          <h3>🔐 تغییر نام کاربری</h3>
+          <div class="form-group">
+            <label>نام کاربری فعلی</label
+            ><input type="text" id="currentUsername" readonly />
+          </div>
+          <div class="form-group">
+            <label>نام کاربری جدید</label
+            ><input type="text" id="newUsername" pattern="[a-zA-Z0-9_]{4,20}" />
+          </div>
+          <button type="button" id="changeUsernameBtn" class="btn btn-primary">
+            تغییر نام کاربری
+          </button>
+          <hr style="margin: 30px 0" />
+          <h3>🔑 تغییر رمز عبور</h3>
+          <div class="form-group">
+            <label>رمز عبور فعلی</label
+            ><input type="password" id="currentPassword" />
+          </div>
+          <div class="form-group">
+            <label>رمز عبور جدید</label
+            ><input type="password" id="newPassword" />
+          </div>
+          <div class="form-group">
+            <label>تکرار رمز عبور جدید</label
+            ><input type="password" id="confirmNewPassword" />
+          </div>
+          <button type="button" id="changePasswordBtn" class="btn btn-primary">
+            تغییر رمز عبور
+          </button>
+        </form>
+      </div>
+      <div class="tab-content" id="notificationsTab">
+        <div class="notifications-list" id="userNotificationsList"></div>
+      </div>
+    </div>
+  </div>
+</div>
