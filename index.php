@@ -745,7 +745,7 @@
               <div class="team-avatar">
                 <img
                   src="assets/images/team-mj.jpg"
-                  alt="محمدجواد قادری"
+                  alt="گروه محمدجواد قادری"
                   class="team-photo"
                 />
                 <div class="avatar-glow"></div>
@@ -838,7 +838,7 @@
               <div class="team-avatar">
                 <img
                   src="assets/images/team-armin.jpg"
-                  alt="آرمین فرزانه"
+                  alt="گروه آرمین فرزانه"
                   class="team-photo"
                 />
                 <div class="avatar-glow"></div>
