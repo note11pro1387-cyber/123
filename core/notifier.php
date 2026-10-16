@@ -64,7 +64,7 @@ function sendTelegramMessage(string $text, ?array $keyboard = null, ?string $cha
     return is_array($response) && ($response['ok'] ?? false) === true;
 }
 
-function sendVerificationToTelegram(string $telegramId, string $code, string $fullName, string $type = 'register'): bool {
+function sendVerificationToTelegram(string $telegramId, string $code, string $fullName, string $type = 'register', ?string $chatId = null): bool {
     $typeText = $type === 'register' ? 'ثبت‌نام' : 'بازیابی رمز';
     
     $message = "🔐 *کد تایید $typeText در MR NEON*\n";
@@ -73,7 +73,7 @@ function sendVerificationToTelegram(string $telegramId, string $code, string $fu
     $message .= "🔑 *کد تایید ۶ رقمی شما:*\n";
     $message .= "```\n$code\n```\n\n";
     $message .= "⏰ *تاریخ:* " . toPersianDateTime(date('Y-m-d H:i:s')) . "\n";
-    $message .= "⏳ *اعتبار:* ۱۰ دقیقه\n";
+    $message .= "⏳ *اعتبار:* ۲ دقیقه\n";
     $message .= "━━━━━━━━━━━━━━━━━━\n";
     $message .= "📱 *برای دریافت کد از ربات Notifier:*\n\n";
     $message .= "1️⃣ دکمه *Start* را در ربات بزنید\n";
@@ -97,7 +97,8 @@ function sendVerificationToTelegram(string $telegramId, string $code, string $fu
         ]
     ];
     
-    return sendTelegramMessage($message, $keyboard);
+    if ($chatId !== null && !preg_match('/^-?\\d{5,20}$/', $chatId)) return false;
+    return sendTelegramMessage($message, $keyboard, $chatId);
 }
 
 function notifyNewProject(array $project): void {

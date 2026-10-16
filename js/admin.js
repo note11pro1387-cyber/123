@@ -103,9 +103,7 @@ export class AdminPanel {
     }
 
     const headers = {
-      Authorization: "Bearer " + token,
-      "X-API-Key": CONFIG.apiKey,
-    };
+      Authorization: "Bearer " + token,    };
 
     try {
       const resp = await fetch(CONFIG.apiEndpoint + "?action=getAll", {
@@ -125,7 +123,7 @@ export class AdminPanel {
       );
       if (respUsers.ok) {
         const json = await respUsers.json();
-        this.users = json.users || [];
+        this.users = json.data?.users || json.users || [];
       }
     } catch (e) {
       this.users = [];
@@ -229,7 +227,7 @@ export class AdminPanel {
             </td>
             <td>
                 <div style="max-width: 150px; font-size: 12px;" title="${esc((r.featuresLabels || []).join("، "))}">
-                    ${(r.featuresLabels || []).slice(0, 3).join("<br>") || "-"}
+                    ${(r.featuresLabels || []).slice(0, 3).map(esc).join("<br>") || "-"}
                     ${(r.featuresLabels || []).length > 3 ? `<div style="color: var(--primary-teal);">+${r.featuresLabels.length - 3} مورد دیگر</div>` : ""}
                 </div>
             </td>
@@ -308,19 +306,18 @@ export class AdminPanel {
     if (idx === -1) return;
     this.allData[idx][field] = field === "progress" ? parseInt(value) : value;
     try {
-      await fetch(CONFIG.apiEndpoint + "?action=adminUpdate", {
+      const resp = await fetch(CONFIG.apiEndpoint + "?action=adminUpdate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-          "X-API-Key": CONFIG.apiKey,
-        },
+          Authorization: "Bearer " + token,        },
         body: JSON.stringify({
           id,
           field,
           value: field === "progress" ? parseInt(value) : value,
         }),
       });
+      if (!resp.ok) throw new Error("به‌روزرسانی انجام نشد");
       this.notification?.success("به‌روزرسانی شد");
       this.updateMetrics();
     } catch (e) {
@@ -336,13 +333,11 @@ export class AdminPanel {
 
     this.allData = this.allData.filter((x) => x.id != id);
     try {
-      await fetch(CONFIG.apiEndpoint + "?action=delete", {
+      await fetch(CONFIG.apiEndpoint + "?action=deleteRequest", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-          "X-API-Key": CONFIG.apiKey,
-        },
+          Authorization: "Bearer " + token,        },
         body: JSON.stringify({ id }),
       });
     } catch (e) {}

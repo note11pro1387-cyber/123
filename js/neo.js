@@ -353,9 +353,7 @@ export class NeoPreFlightCheck {
         CONFIG.apiEndpoint + "?action=getActiveProjectsCount",
         {
           headers: {
-            Authorization: "Bearer " + session.data.token,
-            "X-API-Key": CONFIG.apiKey,
-          },
+            Authorization: "Bearer " + session.data.token,          },
         },
       );
       if (resp.ok) {
@@ -945,11 +943,7 @@ export class NeoAssistantPro {
       window.lastSubmittedProject = { ...this.data, ...result.data };
     } catch (e) {
       window.notificationSystem?.error(e.message || "خطا در ارتباط با سرور");
-      // Fallback: ذخیره در localStorage
-      const requests = getStorage("neo_requests") || [];
-      requests.push({ ...this.data, id: Date.now() });
-      setStorage("neo_requests", requests);
-      window.lastSubmittedProject = this.data;
+      return false;
     } finally {
       nextBtn.disabled = false;
       nextBtn.innerHTML = originalBtnHtml;

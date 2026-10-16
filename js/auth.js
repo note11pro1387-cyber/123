@@ -145,9 +145,7 @@ export class AuthSystem {
     const resp = await fetch(CONFIG.apiEndpoint + "?action=login", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": CONFIG.apiKey,
-      },
+        "Content-Type": "application/json",      },
       body: JSON.stringify({ username, password }),
     });
 
@@ -547,9 +545,7 @@ export class RegistrationSystem {
       const resp = await fetch(CONFIG.apiEndpoint + "?action=register", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": CONFIG.apiKey,
-        },
+          "Content-Type": "application/json",        },
         body: JSON.stringify(data),
       });
 
@@ -684,9 +680,7 @@ export class RegistrationSystem {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": CONFIG.apiKey,
-          },
+            "Content-Type": "application/json",          },
           body: JSON.stringify({
             userId: this.pendingUserId,
             code: code,
@@ -735,9 +729,7 @@ export class RegistrationSystem {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": CONFIG.apiKey,
-          },
+            "Content-Type": "application/json",          },
           body: JSON.stringify({ userId: this.pendingUserId }),
         },
       );
@@ -883,11 +875,9 @@ export class ForgotPasswordSystem {
       const resp = await fetch(CONFIG.apiEndpoint + "?action=forgotPassword", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": CONFIG.apiKey,
-        },
+          "Content-Type": "application/json",        },
         body: JSON.stringify({
-          identifier: "@" + identifier.replace(/^@+/, ""),
+          identifier: method === "email" ? identifier.toLowerCase() : "@" + identifier.replace(/^@+/, ""),
           method,
         }),
       });
@@ -960,18 +950,16 @@ export class ForgotPasswordSystem {
 
     try {
       const resp = await fetch(
-        CONFIG.apiEndpoint + "?action=verifyPasswordResetCode",
+        CONFIG.apiEndpoint + "?action=verifyResetCode",
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": CONFIG.apiKey,
-          },
+            "Content-Type": "application/json",          },
           body: JSON.stringify({
             identifier: this.identifier,
             code,
             newPassword,
-            userId: this.userId,
+            method: this.method,
           }),
         },
       );
@@ -1145,13 +1133,11 @@ export class UserPanel {
     try {
       const resp = await fetch(CONFIG.apiEndpoint + "?action=getProjects", {
         headers: {
-          Authorization: "Bearer " + session.data.token,
-          "X-API-Key": CONFIG.apiKey,
-        },
+          Authorization: "Bearer " + session.data.token,        },
       });
       if (resp.ok) {
         const data = await resp.json();
-        this.projects = data.projects || [];
+        this.projects = data.data?.projects || data.projects || [];
         this.renderProjects();
         this.updateStats();
       }
@@ -1351,9 +1337,7 @@ export class UserPanel {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + session.data.token,
-          "X-API-Key": CONFIG.apiKey,
-        },
+          Authorization: "Bearer " + session.data.token,        },
         body: JSON.stringify({ projectId, text: message.trim() }),
       });
       const data = await resp.json();
@@ -1374,9 +1358,7 @@ export class UserPanel {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + session.data.token,
-          "X-API-Key": CONFIG.apiKey,
-        },
+          Authorization: "Bearer " + session.data.token,        },
         body: JSON.stringify({ projectId }),
       });
       if (resp.ok) {
@@ -1406,9 +1388,7 @@ export class UserPanel {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + session.data.token,
-          "X-API-Key": CONFIG.apiKey,
-        },
+          Authorization: "Bearer " + session.data.token,        },
         body: JSON.stringify({ projectId, userNote: newNote }),
       });
       if (resp.ok) {
@@ -1436,14 +1416,12 @@ export class UserPanel {
         CONFIG.apiEndpoint + "?action=getNotifications",
         {
           headers: {
-            Authorization: "Bearer " + session.data.token,
-            "X-API-Key": CONFIG.apiKey,
-          },
+            Authorization: "Bearer " + session.data.token,          },
         },
       );
       if (resp.ok) {
         const data = await resp.json();
-        this.notifications = data.notifications || [];
+        this.notifications = data.data?.notifications || data.notifications || [];
         this.renderNotifications();
       }
     } catch (e) {}
@@ -1481,9 +1459,7 @@ export class UserPanel {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + session.data.token,
-        "X-API-Key": CONFIG.apiKey,
-      },
+        Authorization: "Bearer " + session.data.token,      },
       body: JSON.stringify({ id: notifId }),
     });
   }
@@ -1499,9 +1475,7 @@ export class UserPanel {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + session.data.token,
-          "X-API-Key": CONFIG.apiKey,
-        },
+          Authorization: "Bearer " + session.data.token,        },
         body: JSON.stringify({ newUsername }),
       });
       const data = await resp.json();
@@ -1533,9 +1507,7 @@ export class UserPanel {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer " + session.data.token,
-          "X-API-Key": CONFIG.apiKey,
-        },
+          Authorization: "Bearer " + session.data.token,        },
         body: JSON.stringify({
           currentPassword: current,
           newPassword: newPass,

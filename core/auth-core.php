@@ -10,33 +10,34 @@
  * 🧠 AI NOTE: منطق اعتبارسنجی توکن و API Key در api.php انجام می‌شود. این فایل فقط منطق خالص Auth را انجام می‌دهد.
  */
 
-function sendVerificationCode(string $identifier, string $fullName, string $type = 'register'): array {
+function sendVerificationCode(string $identifier, string $fullName, string $type = 'register', string $method = 'telegram', ?string $telegramChatId = null): array {
+    $method = $method === 'email' ? 'email' : 'telegram';
     $code = generateVerificationCode();
-    $expiresAt = time() + 600; // 10 minutes
-    
+    $verification = ['id'=>bin2hex(random_bytes(16)),'identifier'=>$identifier,'code'=>password_hash($code,PASSWORD_DEFAULT),'type'=>$type,'method'=>$method,'expiresAt'=>time()+120,'attempts'=>0,'used'=>false,'createdAt'=>date('Y-m-d H:i:s')];
     $verifications = readJsonFile(VERIFICATION_FILE);
-    $verifications = array_filter($verifications, fn($v) => $v['expiresAt'] > time());
-    
-    $verifications[] = [
-        'id' => uniqid('ver_'),
-        'identifier' => $identifier,
-        'code' => password_hash($code, PASSWORD_BCRYPT),
-        'type' => $type,
-        'expiresAt' => $expiresAt,
-        'attempts' => 0,
-        'used' => false,
-        'createdAt' => date('Y-m-d H:i:s'),
-    ];
-    writeJsonFile(VERIFICATION_FILE, array_values($verifications));
-    
-    // ارسال به تلگرام (همیشه)
-    $telegramSent = sendVerificationToTelegram($identifier, $code, $fullName, $type);
-    
-    return [
-        'code_sent' => $telegramSent,
-        'telegram_sent' => $telegramSent,
-        'method' => 'telegram',
-    ];
+    $verifications = array_values(array_filter($verifications, fn($v)=>(int)($v['expiresAt']??0)>time()));
+    $verifications[] = $verification;
+    writeJsonFile(VERIFICATION_FILE,$verifications);
+    $sent = false;
+    if ($method === 'email') {
+        if (filter_var($identifier,FILTER_VALIDATE_EMAIL) && MR_NEON_MAIL_FROM !== '') {
+            $subject='MR NEON verification code';
+            $body="کد تأیید شما: {$code}\nاین کد فقط ۲ دقیقه اعتبار دارد. اگر شما درخواست نداده‌اید، این پیام را نادیده بگیرید.";
+            $from=str_replace(["\\r","\\n"],'',MR_NEON_MAIL_FROM);
+            $headers="From: {$from}\\r\\nContent-Type: text/plain; charset=UTF-8";
+            $sent=@mail($identifier,$subject,$body,$headers);
+        }
+    } elseif ($telegramChatId !== null && preg_match('/^-?\\d{5,20}$/',$telegramChatId)) {
+        $sent=sendVerificationToTelegram($identifier,$code,$fullName,$type,$telegramChatId);
+    } elseif ($type === 'register') {
+        $sent=sendVerificationToTelegram($identifier,$code,$fullName,$type);
+    }
+    if (!$sent) {
+        $verifications=readJsonFile(VERIFICATION_FILE);
+        $verifications=array_values(array_filter($verifications,fn($v)=>($v['id']??'')!==$verification['id']));
+        writeJsonFile(VERIFICATION_FILE,$verifications);
+    }
+    return ['code_sent'=>$sent,'telegram_sent'=>$method==='telegram'&&$sent,'method'=>$method];
 }
 
 function verifyCode(string $identifier, string $code, string $type = 'register'): bool {
@@ -237,6 +238,18 @@ function handleResendVerificationCode(): void {
     jsonSuccess($result);
 }
 
+function handleAdminLogin(): void {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonError('Method not allowed', 405);
+    $input = getInput();
+    $username = is_string($input['username'] ?? null) ? trim($input['username']) : '';
+    $password = is_string($input['password'] ?? null) ? $input['password'] : '';
+    if ($username === '' || $password === '') jsonError('Invalid credentials', 401);
+    if (ADMIN_USERNAME === '' || ADMIN_PASSWORD === '') jsonError('Admin login is not configured', 503);
+    if (!hash_equals(ADMIN_USERNAME, $username) || !hash_equals(ADMIN_PASSWORD, $password)) jsonError('Invalid credentials', 401);
+    $token = createSession('admin', ['username' => $username], 'admin');
+    jsonSuccess(['username' => $username, 'token' => $token]);
+}
+
 function handleLogin(): void {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonError('Method not allowed', 405);
     
@@ -287,94 +300,64 @@ function handleLogin(): void {
 }
 
 function handleForgotPassword(): void {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonError('Method not allowed', 405);
-    
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonError('Method not allowed', 405);
     $input = getInput();
-    $identifier = sanitizeString($input['identifier'] ?? '');
-    
-    if (empty($identifier)) jsonError('شناسه الزامی است', 422);
-    
+    $method = ($input['method'] ?? 'telegram') === 'email' ? 'email' : 'telegram';
+    $identifier = is_string($input['identifier'] ?? null) ? trim($input['identifier']) : '';
+    if ($method === 'email') {
+        $identifier = strtolower($identifier);
+        if (!filter_var($identifier, FILTER_VALIDATE_EMAIL) || strlen($identifier) > 254) jsonError('Invalid identifier', 422);
+    } else {
+        $identifier = '@' . ltrim($identifier, '@');
+        if (!preg_match('/^@[A-Za-z0-9_]{5,32}$/', $identifier)) jsonError('Invalid identifier', 422);
+    }
     $users = readJsonFile(DATA_DIR . '/users.json');
     $found = null;
-    
     foreach ($users as $user) {
-        if (!empty($user['telegramId']) && $user['telegramId'] === $identifier) {
-            $found = $user; break;
-        }
-        if ($user['phone'] === $identifier) {
-            $found = $user; break;
-        }
+        $matches = $method === 'email'
+            ? strtolower((string)($user['email'] ?? '')) === $identifier
+            : (string)($user['telegramId'] ?? '') === $identifier;
+        if ($matches) { $found = $user; break; }
     }
-    
-    if (!$found) {
-        jsonSuccess([
-            'message' => 'If the account exists, a reset code will be sent',
-            'found' => false,
-        ]);
-        return;
+    if ($found) {
+        if ($method === 'email') {
+            $result = sendVerificationCode($identifier, (string)($found['fullName'] ?? ''), 'password_reset', 'email');
+        } else {
+            $chatId = (string)($found['telegramChatId'] ?? '');
+            $result = sendVerificationCode($identifier, (string)($found['fullName'] ?? ''), 'password_reset', 'telegram', $chatId !== '' ? $chatId : null);
+        }
+        if (empty($result['code_sent'])) error_log('Password recovery delivery unavailable.');
     }
-    
-    $telegramId = $found['telegramId'] ?? $identifier;
-    $result = sendVerificationCode($telegramId, $found['fullName'], 'password_reset');
-    
-    $resets = readJsonFile(DATA_DIR . '/password_resets.json');
-    $resets[] = [
-        'id' => uniqid('reset_'),
-        'userId' => $found['id'],
-        'identifier' => $telegramId,
-        'expiresAt' => time() + 900,
-        'createdAt' => date('Y-m-d H:i:s'),
-    ];
-    writeJsonFile(DATA_DIR . '/password_resets.json', $resets);
-    
-    jsonSuccess([
-        'found' => true,
-        'userId' => $found['id'],
-        'method' => 'telegram',
-        'identifier' => $telegramId,
-        'message' => "کد بازیابی به تلگرام ارسال شد",
-    ]);
+    jsonSuccess(['message' => 'اگر حسابی با این شناسه و روش بازیابی ثبت شده باشد، کد ارسال خواهد شد.']);
 }
 
 function handleVerifyResetCode(): void {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonError('Method not allowed', 405);
-    
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonError('Method not allowed', 405);
     $input = getInput();
-    $identifier = sanitizeString($input['identifier'] ?? '');
-    $code = sanitizeString($input['code'] ?? '');
-    $newPassword = $input['newPassword'] ?? '';
-    $userId = $input['userId'] ?? '';
-    
-    if (empty($identifier) || empty($code) || empty($newPassword)) jsonError('تمام فیلدها الزامی است', 422);
+    $method = ($input['method'] ?? 'telegram') === 'email' ? 'email' : 'telegram';
+    $identifier = is_string($input['identifier'] ?? null) ? trim($input['identifier']) : '';
+    $code = is_string($input['code'] ?? null) ? trim($input['code']) : '';
+    $newPassword = is_string($input['newPassword'] ?? null) ? $input['newPassword'] : '';
+    $identifier = $method === 'email' ? strtolower($identifier) : '@' . ltrim($identifier, '@');
+    if ($identifier === '' || !preg_match('/^\\d{6}$/', $code) || $newPassword === '') jsonError('Invalid or expired recovery request', 400);
     if (!validatePassword($newPassword)) jsonError('رمز عبور باید حداقل ۸ کاراکتر شامل حروف و عدد باشد', 422);
-    
-    if (!verifyCode($identifier, $code, 'password_reset')) {
-        jsonError('کد نامعتبر یا منقضی شده است', 400);
-    }
-    
+    if (!verifyCode($identifier, $code, 'password_reset')) jsonError('Invalid or expired recovery request', 400);
     $users = readJsonFile(DATA_DIR . '/users.json');
-    $found = false;
-    $targetId = null;
-    
-    foreach ($users as &$u) {
-        if ($u['id'] === $userId ||
-            ($u['telegramId'] ?? '') === $identifier ||
-            $u['phone'] === $identifier) {
-            $u['password'] = password_hash($newPassword, PASSWORD_ARGON2ID);
-            $found = true;
-            $targetId = $u['id'];
-            break;
-        }
+    $targetIndex = null;
+    foreach ($users as $index => $user) {
+        $matches = $method === 'email'
+            ? strtolower((string)($user['email'] ?? '')) === $identifier
+            : (string)($user['telegramId'] ?? '') === $identifier;
+        if ($matches) { $targetIndex = $index; break; }
     }
-    
-    if (!$found) jsonError('User not found', 404);
+    if ($targetIndex === null) jsonError('Invalid or expired recovery request', 400);
+    $targetId = (string)$users[$targetIndex]['id'];
+    $users[$targetIndex]['password'] = password_hash($newPassword, PASSWORD_ARGON2ID);
     writeJsonFile(DATA_DIR . '/users.json', $users);
-    
     $sessions = readJsonFile(DATA_DIR . '/sessions.json');
-    $sessions = array_filter($sessions, fn($s) => $s['user_id'] !== $targetId);
+    foreach ($sessions as $sid => $session) if ((string)($session['user_id'] ?? '') === $targetId) unset($sessions[$sid]);
     writeJsonFile(DATA_DIR . '/sessions.json', $sessions);
-    
-    jsonSuccess(['message' => 'رمز عبور با موفقیت بازنشانی شد']);
+    jsonSuccess(['message' => 'رمز عبور با موفقیت بازنشانی شد. اکنون وارد شوید.']);
 }
 
 function handleChangeUsername(): void {
