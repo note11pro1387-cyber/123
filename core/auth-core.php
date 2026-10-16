@@ -23,8 +23,8 @@ function sendVerificationCode(string $identifier, string $fullName, string $type
         if (filter_var($identifier,FILTER_VALIDATE_EMAIL) && MR_NEON_MAIL_FROM !== '') {
             $subject='MR NEON verification code';
             $body="کد تأیید شما: {$code}\nاین کد فقط ۲ دقیقه اعتبار دارد. اگر شما درخواست نداده‌اید، این پیام را نادیده بگیرید.";
-            $from=str_replace(["\\r","\\n"],'',MR_NEON_MAIL_FROM);
-            $headers="From: {$from}\\r\\nContent-Type: text/plain; charset=UTF-8";
+            $from=str_replace(["\r","\n"],'',MR_NEON_MAIL_FROM);
+            $headers="From: {$from}\r\nContent-Type: text/plain; charset=UTF-8";
             $sent=@mail($identifier,$subject,$body,$headers);
         }
     } elseif ($telegramChatId !== null && preg_match('/^-?\\d{5,20}$/',$telegramChatId)) {
