@@ -1,0 +1,2 @@
+# Prevent direct HTTP access to runtime JSON stores, logs, and lock files.
+Require all denied
