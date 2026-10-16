@@ -127,49 +127,56 @@ function handleGetProjectById(): void {
 }
 
 function handleUpdateProject(): void {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonError('Method not allowed', 405);
     $session = verifyUserSession();
     $input = getInput();
     $id = $input['projectId'] ?? $input['id'] ?? null;
-    if (!$id) jsonError('Project ID required', 422);
-    
-    $requests = readJsonFile(DATA_DIR . '/requests.json');
+    if (!is_string($id) || $id === '') jsonError('Project ID required', 422);
+    $allowed = ['userNote','fullName','phone','email','messenger','messengerId'];
+    if (array_diff(array_keys($input), array_merge($allowed, ['projectId','id']))) jsonError('Unsupported project fields', 422);
+    foreach ($allowed as $field) {
+        if (isset($input[$field]) && !is_string($input[$field])) jsonError('Invalid field type', 422);
+        if (isset($input[$field]) && mb_strlen(trim($input[$field]), 'UTF-8') > ($field === 'userNote' ? 3000 : 254)) jsonError('Field too long', 422);
+    }
+    if (isset($input['phone']) && !validatePhone(trim($input['phone']))) jsonError('Invalid phone number', 422);
+    if (isset($input['email']) && $input['email'] !== '' && !validateEmail(trim($input['email']))) jsonError('Invalid email', 422);
     $found = false;
-    
-    foreach ($requests as &$r) {
-        if ($r['id'] === $id && ($r['userId'] ?? '') === $session['user_id']) {
-            $allowed = ['userNote', 'fullName', 'phone', 'email', 'messenger', 'messengerId'];
-            foreach ($allowed as $f) {
-                if (isset($input[$f])) $r[$f] = sanitizeString($input[$f]);
+    mutateJsonFile(DATA_DIR . '/requests.json', function (array $requests) use ($input,$id,$session,&$found) {
+        foreach ($requests as &$project) {
+            if (($project['id'] ?? '') !== $id || ($project['userId'] ?? '') !== $session['user_id']) continue;
+            foreach (['userNote','fullName','phone','email','messenger','messengerId'] as $field) {
+                if (array_key_exists($field, $input)) $project[$field] = trim($input[$field]);
             }
             $now = date('Y-m-d H:i:s');
-            $r['activityLog'][] = [
-                'type' => 'edited',
-                'timestamp' => $now,
-                'message' => 'ویرایش توسط کاربر',
-                'persianDateTime' => toPersianDateTime($now)
-            ];
+            $project['activityLog'] = is_array($project['activityLog'] ?? null) ? $project['activityLog'] : [];
+            $project['activityLog'][] = ['type'=>'edited','timestamp'=>$now,'message'=>'ویرایش توسط کاربر','persianDateTime'=>toPersianDateTime($now)];
             $found = true;
             break;
         }
-    }
-    
+        unset($project);
+        return array_values($requests);
+    });
     if (!$found) jsonError('Project not found', 404);
-    writeJsonFile(DATA_DIR . '/requests.json', $requests);
-    jsonSuccess();
+    jsonSuccess(['updated'=>true]);
 }
 
 function handleDeleteProject(): void {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonError('Method not allowed', 405);
     $session = verifyUserSession();
     $input = getInput();
     $id = $input['projectId'] ?? $input['id'] ?? null;
-    if (!$id) jsonError('Project ID required', 422);
-    
-    $requests = readJsonFile(DATA_DIR . '/requests.json');
-    $filtered = array_filter($requests, fn($r) => !(($r['id'] ?? '') === $id && ($r['userId'] ?? '') === $session['user_id']));
-    
-    if (count($filtered) === count($requests)) jsonError('Project not found', 404);
-    writeJsonFile(DATA_DIR . '/requests.json', array_values($filtered));
-    jsonSuccess();
+    if (!is_string($id) || $id === '') jsonError('Project ID required', 422);
+    $deleted = false;
+    mutateJsonFile(DATA_DIR . '/requests.json', function (array $requests) use ($id,$session,&$deleted) {
+        $next = [];
+        foreach ($requests as $project) {
+            if (($project['id'] ?? '') === $id && ($project['userId'] ?? '') === $session['user_id']) { $deleted = true; continue; }
+            $next[] = $project;
+        }
+        return $next;
+    });
+    if (!$deleted) jsonError('Project not found', 404);
+    jsonSuccess(['deleted'=>true]);
 }
 
 function handleAdminUpdate(): void {
@@ -254,21 +261,25 @@ function handleGetNotifications(): void {
 }
 
 function handleMarkNotificationRead(): void {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonError('Method not allowed', 405);
     $session = verifyUserSession();
     $input = getInput();
     $id = $input['id'] ?? null;
-    if (!$id) jsonError('Notification ID required', 422);
-    
-    $notifs = readJsonFile(DATA_DIR . '/notifications.json');
-    foreach ($notifs as &$n) {
-        if ($n['id'] === $id && ($n['userId'] ?? '') === $session['user_id']) {
-            $n['read'] = true;
-            break;
+    if (!is_string($id) || $id === '') jsonError('Notification ID required', 422);
+    $found = false;
+    mutateJsonFile(DATA_DIR . '/notifications.json', function (array $notifs) use ($id,$session,&$found) {
+        foreach ($notifs as &$notification) {
+            if (($notification['id'] ?? '') === $id && ($notification['userId'] ?? '') === $session['user_id']) {
+                $notification['read'] = true;
+                $found = true;
+                break;
+            }
         }
-    }
-    
-    writeJsonFile(DATA_DIR . '/notifications.json', $notifs);
-    jsonSuccess();
+        unset($notification);
+        return array_values($notifs);
+    });
+    if (!$found) jsonError('Notification not found', 404);
+    jsonSuccess(['updated'=>true]);
 }
 
 function handleGetActiveProjectsCount(): void {
@@ -277,17 +288,22 @@ function handleGetActiveProjectsCount(): void {
 }
 
 function handleDeleteRequest(): void {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonError('Method not allowed', 405);
     verifyAdminAuth();
     $input = getInput();
     $id = $input['id'] ?? null;
-    if (!$id) jsonError('ID required', 422);
-    
-    $requests = readJsonFile(DATA_DIR . '/requests.json');
-    $filtered = array_filter($requests, fn($r) => ($r['id'] ?? '') !== $id);
-    
-    if (count($filtered) === count($requests)) jsonError('Request not found', 404);
-    writeJsonFile(DATA_DIR . '/requests.json', array_values($filtered));
-    jsonSuccess();
+    if (!is_string($id) || $id === '') jsonError('ID required', 422);
+    $deleted = false;
+    mutateJsonFile(DATA_DIR . '/requests.json', function (array $requests) use ($id,&$deleted) {
+        $next = [];
+        foreach ($requests as $project) {
+            if (($project['id'] ?? '') === $id) { $deleted = true; continue; }
+            $next[] = $project;
+        }
+        return $next;
+    });
+    if (!$deleted) jsonError('Request not found', 404);
+    jsonSuccess(['deleted'=>true]);
 }
 
 // ====================== 12. HELPER LABELS ======================
