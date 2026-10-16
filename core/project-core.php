@@ -21,92 +21,75 @@ function countActiveProjectsByUser(string $userId): int {
     return $count;
 }
 
+function customerProjectView(array $project): array {
+    unset($project['adminNote'], $project['changesNotified']);
+    $visibleTypes = ['created', 'edited', 'progress', 'status'];
+    $history = [];
+    foreach (($project['activityLog'] ?? []) as $event) {
+        if (!is_array($event) || !in_array(($event['type'] ?? ''), $visibleTypes, true)) continue;
+        unset($event['note'], $event['adminNote'], $event['internalNote']);
+        $history[] = $event;
+    }
+    $project['activityLog'] = $history;
+    return $project;
+}
+
 function handleSaveNeo(): void {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonError('Method not allowed', 405);
-    
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonError('Method not allowed', 405);
+    $session = verifyUserSession();
+    $userId = (string)($session['user_id'] ?? '');
+    if ($userId === '') jsonError('Authentication required', 401);
     $input = getInput();
-    if (empty($input)) jsonError('Empty request body', 400);
-    
-    $userId = null;
-    $token = getBearerToken();
-    if ($token) {
-        try {
-            $session = verifyUserSession();
-            $userId = $session['user_id'];
-            $activeCount = countActiveProjectsByUser($userId);
-            if ($activeCount >= 3) jsonError('شما ۳ پروژه فعال دارید. لطفاً صبر کنید.', 429);
-        } catch (Throwable $e) {
-            $userId = null;
-        }
+    if (!$input) jsonError('Empty request body', 400);
+    $allowed = ['industry','purpose','projectType','colors','style','features','content','timeline','fullName','phone','email','messenger','messengerId','userNote'];
+    if (array_diff(array_keys($input), $allowed)) jsonError('Unsupported project fields', 422);
+    foreach (['industry'=>80,'purpose'=>120,'projectType'=>120,'style'=>80,'timeline'=>40,'fullName'=>100,'phone'=>24,'email'=>254,'messenger'=>40,'messengerId'=>100,'userNote'=>3000] as $field=>$max) {
+        if (isset($input[$field]) && !is_string($input[$field])) jsonError('Invalid field type', 422);
+        if (isset($input[$field]) && mb_strlen(trim($input[$field]), 'UTF-8') > $max) jsonError('Field too long', 422);
     }
-    
-    $industry = sanitizeString($input['industry'] ?? '');
-    $purpose = sanitizeString($input['purpose'] ?? '');
-    $projectType = sanitizeString($input['projectType'] ?? '');
-    
-    if (empty($projectType) && !empty($industry) && !empty($purpose)) {
-        $projectType = $industry . '_' . $purpose;
+    foreach (['industry','purpose','style','timeline','fullName','phone'] as $field) {
+        if (trim((string)($input[$field] ?? '')) === '') jsonError('Required field missing', 422);
     }
-    if (empty($projectType)) $projectType = 'custom';
-    
-    $trackingCode = $input['trackingCode'] ?? generateTrackingCode();
+    if (!validatePhone(trim((string)$input['phone']))) jsonError('Invalid phone number', 422);
+    if (!empty($input['email']) && !validateEmail(trim((string)$input['email']))) jsonError('Invalid email', 422);
+    foreach (['colors','features','content'] as $field) if (!is_array($input[$field] ?? null)) jsonError('Invalid structured project field', 422);
+    if (count($input['features']) > 50 || count($input['colors']) > 20 || count($input['content']) > 20) jsonError('Too many project values', 422);
+    foreach ($input['features'] as $feature) if (!is_string($feature) || strlen($feature) > 80) jsonError('Invalid project feature', 422);
+    foreach ($input['content'] as $key=>$value) {
+        if (!is_string($key) || strlen($key) > 80 || (!is_string($value) && !is_array($value))) jsonError('Invalid project content', 422);
+        if (is_string($value) && mb_strlen($value, 'UTF-8') > 5000) jsonError('Project content too long', 422);
+    }
+    $projectType = trim((string)($input['projectType'] ?? ''));
+    if ($projectType === '') $projectType = trim($input['industry']) . '_' . trim($input['purpose']);
     $createdAt = date('Y-m-d H:i:s');
-    
     $project = [
-        'id' => uniqid('req_'),
-        'userId' => $userId,
-        'trackingCode' => $trackingCode,
-        'projectType' => $projectType,
-        'industry' => $industry,
-        'purpose' => $purpose,
-        'colors' => $input['colors'] ?? [],
-        'style' => sanitizeString($input['style'] ?? ''),
-        'features' => $input['features'] ?? [],
-        'content' => $input['content'] ?? [],
-        'timeline' => sanitizeString($input['timeline'] ?? ''),
-        'fullName' => sanitizeString($input['fullName'] ?? ''),
-        'phone' => sanitizeString($input['phone'] ?? ''),
-        'email' => sanitizeString($input['email'] ?? ''),
-        'messenger' => sanitizeString($input['messenger'] ?? ''),
-        'messengerId' => sanitizeString($input['messengerId'] ?? ''),
-        'userNote' => sanitizeString($input['userNote'] ?? ''),
-        'status' => 'new',
-        'progress' => 0,
-        'adminNote' => '',
-        'createdAt' => $createdAt,
-        'persianDate' => toPersianDate($createdAt),
-        'persianDateTime' => toPersianDateTime($createdAt),
-        'activityLog' => [
-            ['type' => 'created', 'timestamp' => $createdAt, 'message' => 'درخواست ثبت شد', 'persianDateTime' => toPersianDateTime($createdAt)]
-        ],
-        'changesNotified' => false,
+        'id'=>'req_' . bin2hex(random_bytes(16)), 'userId'=>$userId,
+        'trackingCode'=>generateTrackingCode(), 'projectType'=>$projectType,
+        'industry'=>trim($input['industry']), 'purpose'=>trim($input['purpose']),
+        'colors'=>$input['colors'], 'style'=>trim($input['style']), 'features'=>array_values($input['features']),
+        'content'=>$input['content'], 'timeline'=>trim($input['timeline']), 'fullName'=>trim($input['fullName']),
+        'phone'=>trim($input['phone']), 'email'=>trim((string)($input['email'] ?? '')),
+        'messenger'=>trim((string)($input['messenger'] ?? '')), 'messengerId'=>trim((string)($input['messengerId'] ?? '')),
+        'userNote'=>trim((string)($input['userNote'] ?? '')), 'status'=>'new', 'progress'=>0, 'adminNote'=>'',
+        'createdAt'=>$createdAt, 'persianDate'=>toPersianDate($createdAt), 'persianDateTime'=>toPersianDateTime($createdAt),
+        'activityLog'=>[['type'=>'created','timestamp'=>$createdAt,'message'=>'درخواست ثبت شد','persianDateTime'=>toPersianDateTime($createdAt)]],
+        'changesNotified'=>false,
     ];
-    
-    $requests = readJsonFile(DATA_DIR . '/requests.json');
-    $requests[] = $project;
-    writeJsonFile(DATA_DIR . '/requests.json', $requests);
-    
-    notifyNewProject($project);
-    
-    if ($userId) {
-        $notifs = readJsonFile(DATA_DIR . '/notifications.json');
-        $notifs[] = [
-            'id' => uniqid('notif_'),
-            'userId' => $userId,
-            'title' => 'پروژه جدید ثبت شد',
-            'message' => "پروژه با کد پیگیری $trackingCode ثبت شد. تیم ما به زودی بررسی می‌کند.",
-            'read' => false,
-            'timestamp' => $createdAt,
-        ];
-        writeJsonFile(DATA_DIR . '/notifications.json', $notifs);
-    }
-    
-    jsonSuccess([
-        'trackingCode' => $trackingCode,
-        'projectType' => $projectType,
-        'persianDate' => toPersianDate($createdAt),
-        'persianDateTime' => toPersianDateTime($createdAt),
-    ]);
+    mutateJsonFile(DATA_DIR . '/requests.json', function (array $requests) use ($project,$userId) {
+        $active = 0;
+        foreach ($requests as $r) if (($r['userId'] ?? '') === $userId && !in_array(($r['status'] ?? ''), ['completed','rejected'], true)) $active++;
+        if ($active >= 3) jsonError('شما ۳ پروژه فعال دارید. لطفاً صبر کنید.', 429);
+        $requests[] = $project;
+        return array_values($requests);
+    });
+    try { notifyNewProject($project); } catch (Throwable $e) { error_log('Project notification failed.'); }
+    try {
+        mutateJsonFile(DATA_DIR . '/notifications.json', function (array $notifs) use ($userId,$project,$createdAt) {
+            $notifs[]=['id'=>'notif_'.bin2hex(random_bytes(12)),'userId'=>$userId,'title'=>'پروژه جدید ثبت شد','message'=>'پروژه با کد پیگیری '.$project['trackingCode'].' ثبت شد. تیم ما به‌زودی بررسی می‌کند.','read'=>false,'timestamp'=>$createdAt];
+            return array_values($notifs);
+        });
+    } catch (Throwable $e) { error_log('Project notification persistence failed.'); }
+    jsonSuccess(['id'=>$project['id'],'trackingCode'=>$project['trackingCode'],'projectType'=>$projectType,'persianDate'=>$project['persianDate'],'persianDateTime'=>$project['persianDateTime']]);
 }
 
 function handleGetProjects(): void {
@@ -114,7 +97,7 @@ function handleGetProjects(): void {
     $userId = $session['user_id'];
     
     $requests = readJsonFile(DATA_DIR . '/requests.json');
-    $userProjects = array_values(array_filter($requests, fn($r) => ($r['userId'] ?? '') === $userId));
+    $userProjects = array_values(array_map('customerProjectView', array_filter($requests, fn($r) => ($r['userId'] ?? '') === $userId)));
     
     usort($userProjects, fn($a, $b) => strtotime($b['createdAt'] ?? '') <=> strtotime($a['createdAt'] ?? ''));
     
@@ -136,7 +119,7 @@ function handleGetProjectById(): void {
         if ($r['id'] === $id && ($r['userId'] ?? '') === $session['user_id']) {
             $r['persianDate'] = toPersianDate($r['createdAt'] ?? '');
             $r['persianDateTime'] = toPersianDateTime($r['createdAt'] ?? '');
-            jsonSuccess($r);
+            jsonSuccess(customerProjectView($r));
         }
     }
     
@@ -190,99 +173,38 @@ function handleDeleteProject(): void {
 }
 
 function handleAdminUpdate(): void {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonError('Method not allowed', 405);
     verifyAdminAuth();
-    $input = getInput();
-    $id = $input['id'] ?? null;
-    $field = $input['field'] ?? null;
-    $value = $input['value'] ?? null;
-    
-    if (!$id || !$field) jsonError('ID and field required', 422);
-    
-    $allowed = ['progress', 'adminNote', 'status'];
-    if (!in_array($field, $allowed)) jsonError('Field not allowed', 422);
-    
-    $requests = readJsonFile(DATA_DIR . '/requests.json');
-    $found = false;
-    
-    foreach ($requests as &$r) {
-        if ($r['id'] === $id) {
-            $r[$field] = ($field === 'progress') ? (int)$value : sanitizeString($value);
-            $now = date('Y-m-d H:i:s');
-            
-            if ($field === 'progress') {
-                $r['activityLog'][] = [
-                    'type' => 'progress', 'timestamp' => $now,
-                    'message' => "پیشرفت به {$value}٪ تغییر کرد",
-                    'persianDateTime' => toPersianDateTime($now)
-                ];
-                
-                if (!empty($r['userId'])) {
-                    $notifs = readJsonFile(DATA_DIR . '/notifications.json');
-                    $notifs[] = [
-                        'id' => uniqid('notif_'),
-                        'userId' => $r['userId'],
-                        'title' => 'پیشرفت پروژه',
-                        'message' => "پروژه «{$r['trackingCode']}» به {$value}٪ رسید",
-                        'read' => false,
-                        'timestamp' => $now,
-                    ];
-                    writeJsonFile(DATA_DIR . '/notifications.json', $notifs);
-                }
-            } elseif ($field === 'adminNote') {
-                $r['activityLog'][] = [
-                    'type' => 'admin_note', 'timestamp' => $now,
-                    'message' => 'یادداشت جدید',
-                    'note' => sanitizeString($value),
-                    'persianDateTime' => toPersianDateTime($now)
-                ];
-                
-                if (!empty($r['userId'])) {
-                    $notifs = readJsonFile(DATA_DIR . '/notifications.json');
-                    $notifs[] = [
-                        'id' => uniqid('notif_'),
-                        'userId' => $r['userId'],
-                        'title' => 'یادداشت جدید از ادمین',
-                        'message' => sanitizeString($value),
-                        'read' => false,
-                        'timestamp' => $now,
-                    ];
-                    writeJsonFile(DATA_DIR . '/notifications.json', $notifs);
-                }
-            } elseif ($field === 'status') {
-                $statusLabels = [
-                    'new' => 'در انتظار بررسی', 'read' => 'خوانده‌شده',
-                    'replied' => 'پاسخ‌داده‌شده', 'in_progress' => 'در حال انجام',
-                    'completed' => 'تکمیل شده', 'rejected' => 'رد شده'
-                ];
-                $label = $statusLabels[$value] ?? $value;
-                $r['activityLog'][] = [
-                    'type' => 'status', 'timestamp' => $now,
-                    'message' => "وضعیت به «$label» تغییر کرد",
-                    'persianDateTime' => toPersianDateTime($now)
-                ];
-                
-                if (!empty($r['userId'])) {
-                    $notifs = readJsonFile(DATA_DIR . '/notifications.json');
-                    $notifs[] = [
-                        'id' => uniqid('notif_'),
-                        'userId' => $r['userId'],
-                        'title' => 'تغییر وضعیت پروژه',
-                        'message' => "پروژه شما به وضعیت «$label» تغییر کرد",
-                        'read' => false,
-                        'timestamp' => $now,
-                    ];
-                    writeJsonFile(DATA_DIR . '/notifications.json', $notifs);
-                }
+    $input=getInput(); $id=$input['id']??null; $field=$input['field']??null; $value=$input['value']??null;
+    if (!is_string($id)||$id===''||!is_string($field)) jsonError('ID and field required',422);
+    if (!in_array($field,['progress','adminNote','status'],true)) jsonError('Field not allowed',422);
+    if ($field==='progress') { if (!is_numeric($value)||(int)$value<0||(int)$value>100) jsonError('Invalid progress',422); $value=(int)$value; }
+    elseif (!is_string($value)||mb_strlen($value,'UTF-8')>3000) jsonError('Invalid field value',422);
+    $labels=['new'=>'در انتظار بررسی','read'=>'خوانده‌شده','replied'=>'پاسخ‌داده‌شده','in_progress'=>'در حال انجام','completed'=>'تکمیل شده','rejected'=>'رد شده'];
+    if ($field==='status'&&!isset($labels[$value])) jsonError('Invalid status',422);
+    $changed=null;
+    mutateJsonFile(DATA_DIR.'/requests.json',function(array $requests)use($id,$field,$value,$labels,&$changed){
+        foreach($requests as &$r){
+            if(($r['id']??'')!==$id)continue;
+            $r[$field]=$value; $now=date('Y-m-d H:i:s');
+            if(in_array($field,['progress','status'],true)){
+                $message=$field==='progress'?"پیشرفت به {$value}٪ تغییر کرد":"وضعیت به «{$labels[$value]}» تغییر کرد";
+                $r['activityLog']=is_array($r['activityLog']??null)?$r['activityLog']:[];
+                $r['activityLog'][]=['type'=>$field,'timestamp'=>$now,'message'=>$message,'persianDateTime'=>toPersianDateTime($now)];
             }
-            
-            $found = true;
-            break;
-        }
+            $changed=['userId'=>$r['userId']??null,'trackingCode'=>$r['trackingCode']??'','field'=>$field,'value'=>$value,'timestamp'=>$now]; break;
+        } unset($r); return array_values($requests);
+    });
+    if($changed===null)jsonError('Project not found',404);
+    if(!empty($changed['userId'])&&in_array($field,['progress','status'],true)){
+        try{mutateJsonFile(DATA_DIR.'/notifications.json',function(array $notifs)use($changed,$labels){
+            $v=$changed['value'];$title=$changed['field']==='progress'?'پیشرفت پروژه به‌روزرسانی شد':'تغییر وضعیت پروژه';
+            $message=$changed['field']==='progress'?"پروژه «{$changed['trackingCode']}» به {$v}٪ رسید":"وضعیت پروژه شما به «{$labels[$v]}» تغییر کرد";
+            $notifs[]=['id'=>'notif_'.bin2hex(random_bytes(12)),'userId'=>$changed['userId'],'title'=>$title,'message'=>$message,'read'=>false,'timestamp'=>$changed['timestamp']];
+            return array_values($notifs);
+        });}catch(Throwable $e){error_log('Project notification persistence failed.');}
     }
-    
-    if (!$found) jsonError('Project not found', 404);
-    writeJsonFile(DATA_DIR . '/requests.json', $requests);
-    jsonSuccess();
+    jsonSuccess(['updated'=>true]);
 }
 
 function handleGetAll(): void {
@@ -311,7 +233,8 @@ function handleGetAllUsers(): void {
     foreach ($users as &$user) {
         $user['persianDate'] = toPersianDate($user['createdAt'] ?? '');
     }
-    jsonSuccess(['users' => $users, 'count' => count($users)]);
+    $safeUsers = array_map(static fn($u) => array_intersect_key($u, array_flip(['id','fullName','username','phone','email','telegramId','verified','createdAt','lastLogin'])), $users);
+    jsonSuccess(['users' => $safeUsers, 'count' => count($safeUsers)]);
 }
 
 function handleGetNotifications(): void {
@@ -319,7 +242,7 @@ function handleGetNotifications(): void {
     $userId = $session['user_id'];
     
     $notifs = readJsonFile(DATA_DIR . '/notifications.json');
-    $userNotifs = array_values(array_filter($notifs, fn($n) => ($n['userId'] ?? '') === $userId));
+    $userNotifs = array_values(array_filter($notifs, fn($n) => ($n['userId'] ?? '') === $userId && ($n['title'] ?? '') !== 'یادداشت جدید از ادمین'));
     usort($userNotifs, fn($a, $b) => strtotime($b['timestamp'] ?? '') <=> strtotime($a['timestamp'] ?? ''));
     
     foreach ($userNotifs as &$n) {

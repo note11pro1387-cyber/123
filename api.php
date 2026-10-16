@@ -21,8 +21,17 @@ header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
+$originParts = $origin !== '' ? parse_url($origin) : false;
+$hostOnly = preg_replace('/:\\d+$/', '', $host);
+$hostPort = preg_match('/:(\\d+)$/', $host, $portMatch) ? (int)$portMatch[1] : ($scheme === 'https' ? 443 : 80);
+$originPort = is_array($originParts) && isset($originParts['port']) ? (int)$originParts['port'] : ($scheme === 'https' ? 443 : 80);
+$sameOrigin = is_array($originParts) && strtolower((string)($originParts['scheme'] ?? '')) === $scheme
+    && strtolower((string)($originParts['host'] ?? '')) === $hostOnly && $originPort === $hostPort;
 $allowedOrigins = array_values(array_filter(array_map('trim', explode(',', MR_NEON_ALLOWED_ORIGINS))));
-if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
+$originAllowed = $sameOrigin || ($origin !== '' && in_array($origin, $allowedOrigins, true));
+if ($origin !== '' && $originAllowed) {
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Access-Control-Allow-Credentials: true');
     header('Vary: Origin');
@@ -30,10 +39,7 @@ if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    if ($origin === '' || !in_array($origin, $allowedOrigins, true)) {
-        http_response_code(403);
-        exit;
-    }
+    if (!$originAllowed) { http_response_code(403); exit; }
     http_response_code(204);
     exit;
 }
@@ -61,33 +67,34 @@ function readJsonFile(string $filePath): array {
 }
 
 function writeJsonFile(string $filePath, array $data): bool {
+    $directory = dirname($filePath);
+    if (!is_dir($directory)) throw new RuntimeException('Storage directory unavailable.');
     $lock = @fopen($filePath . '.write.lock', 'c');
     if (!$lock) throw new RuntimeException('Storage lock unavailable.');
     try {
         if (!flock($lock, LOCK_EX)) throw new RuntimeException('Storage lock unavailable.');
         $encoded = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-        $fp = @fopen($filePath, 'c+');
-        if (!$fp) throw new RuntimeException('Storage write unavailable.');
+        $tempPath = @tempnam($directory, '.mrneon-');
+        if ($tempPath === false) throw new RuntimeException('Storage temporary file unavailable.');
         try {
-            if (!flock($fp, LOCK_EX)) throw new RuntimeException('Storage write lock unavailable.');
-            if (!ftruncate($fp, 0) || !rewind($fp)) throw new RuntimeException('Storage write failed.');
-            $length = strlen($encoded);
-            $written = 0;
-            while ($written < $length) {
-                $n = fwrite($fp, substr($encoded, $written));
-                if ($n === false || $n === 0) throw new RuntimeException('Storage write failed.');
-                $written += $n;
-            }
-            if (!fflush($fp)) throw new RuntimeException('Storage flush failed.');
-            if (function_exists('fsync')) @fsync($fp);
-            flock($fp, LOCK_UN);
-        } finally { fclose($fp); }
+            $fp = @fopen($tempPath, 'wb');
+            if (!$fp) throw new RuntimeException('Storage temporary file unavailable.');
+            try {
+                $length = strlen($encoded); $written = 0;
+                while ($written < $length) {
+                    $n = fwrite($fp, substr($encoded, $written));
+                    if ($n === false || $n === 0) throw new RuntimeException('Storage write failed.');
+                    $written += $n;
+                }
+                if (!fflush($fp)) throw new RuntimeException('Storage flush failed.');
+                if (function_exists('fsync')) @fsync($fp);
+            } finally { fclose($fp); }
+            @chmod($tempPath, 0600);
+            if (!@rename($tempPath, $filePath)) throw new RuntimeException('Storage atomic replace failed.');
+        } finally { if (is_file($tempPath)) @unlink($tempPath); }
         flock($lock, LOCK_UN);
         return true;
-    } finally {
-        @flock($lock, LOCK_UN);
-        fclose($lock);
-    }
+    } finally { @flock($lock, LOCK_UN); fclose($lock); }
 }
 
 function mutateJsonFile(string $filePath, callable $mutator): array {
