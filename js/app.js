@@ -14,8 +14,6 @@ export const CONFIG = {
   telegram: "@MR_NEON_TEAM",
   telegramLink: "https://t.me/MR_NEON_TEAM",
   apiEndpoint: "api.php",
-  apiKey: "MR_13871390",
-  adminCredentials: { username: "MR_NEON", password: "MR_13871390" },
   particleCount: 25,
   scrollThreshold: 50,
   toastDuration: 4000,

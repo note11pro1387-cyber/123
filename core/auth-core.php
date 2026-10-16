@@ -199,15 +199,23 @@ function handleVerifyRegisterCode(): void {
 }
 
 function handleSendVerificationCode(): void {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonError('Method not allowed', 405);
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') jsonError('Method not allowed', 405);
     $input = getInput();
     $identifier = sanitizeString($input['identifier'] ?? '');
-    $fullName = sanitizeString($input['fullName'] ?? '');
     $type = sanitizeString($input['type'] ?? 'register');
-    
-    if (empty($identifier)) jsonError('Identifier required', 422);
-    
-    $result = sendVerificationCode($identifier, $fullName, $type);
+    if ($type !== 'register' || $identifier === '') jsonError('Invalid registration challenge', 422);
+    $identifier = '@' . ltrim($identifier, '@');
+    $pendingRegs = readJsonFile(DATA_DIR . '/pending_registrations.json');
+    $allowed = false;
+    foreach ($pendingRegs as $pending) {
+        if (($pending['telegramId'] ?? '') === $identifier && (int)($pending['expiresAt'] ?? 0) > time()) {
+            $allowed = true;
+            break;
+        }
+    }
+    if (!$allowed) jsonError('Registration challenge not found', 404);
+    $result = sendVerificationCode($identifier, '', 'register');
+    if (empty($result['code_sent'])) jsonError('Verification delivery unavailable', 503);
     jsonSuccess($result);
 }
 

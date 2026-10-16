@@ -11,6 +11,12 @@
 
 import { CONFIG, DOM, sanitizeInput } from "./app.js";
 
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[ch]));
+}
+
 // ============================================================
 // 🔐 سیستم احراز هویت (ورود)
 // ============================================================
@@ -1158,139 +1164,80 @@ export class UserPanel {
     this.setupProjectActions();
   }
   createProjectCard(project) {
-    const progress = project.progress || 0;
-    const statusLabel = this.getStatusLabel(project.status, progress);
-    const statusClass = this.getStatusClass(project.status, progress);
-
-    const industryLabels = {
-      fashion: "👗 مد و پوشاک",
-      tech: "💻 فناوری",
-      food: "🍕 رستوران",
-      health: "🏥 پزشکی",
-      education: "🎓 آموزش",
-      realestate: "🏠 املاک",
-      travel: "✈️ گردشگری",
-      art: "🎨 هنر",
-      sport: "⚽ ورزش",
-      other: "📦 سایر",
-    };
-
-    const styleLabels = {
-      modern: "مدرن",
-      classic: "کلاسیک",
-      creative: "خلاقانه",
-      luxury: "لوکس",
-      cyberpunk: "سایبرپانک",
-      minimal: "مینیمال",
-      dark: "دارک",
-    };
-
-    const timelineLabels = {
-      urgent: "⚡ فوری",
-      normal: "📅 عادی",
-      flexible: "📆 منعطف",
-      agreement: "🤝 توافقی",
-    };
-
-    const timeline = (project.activityLog || [])
-      .slice(-5)
-      .reverse()
-      .map(
-        (log) => `
-            <div class="timeline-item">
-                <div class="timeline-icon" style="background: ${this.getTimelineColor(log.type)};">
-                    ${this.getTimelineIcon(log.type)}
-                </div>
-                <div class="timeline-content">
-                    <div class="timeline-date">${log.persianDateTime || this.formatDate(log.timestamp)}</div>
-                    <div class="timeline-text">${log.message}</div>
-                    ${log.note ? `<div class="timeline-note">📝 ${log.note}</div>` : ""}
-                </div>
-            </div>
-        `,
-      )
-      .join("");
-
-    const industry =
-      industryLabels[project.industry] || project.industry || "نامشخص";
-    const style = styleLabels[project.style] || project.style || "-";
-    const timelineLabel =
-      timelineLabels[project.timeline] || project.timeline || "-";
-
+    const escape = escapeHTML;
+    const progress = Math.max(0, Math.min(100, Number.parseInt(project.progress, 10) || 0));
+    const statusLabel = escape(this.getStatusLabel(project.status, progress));
+    const rawStatusClass = this.getStatusClass(project.status, progress);
+    const statusClass = /^[a-zA-Z0-9_-]+$/.test(rawStatusClass) ? rawStatusClass : "unknown";
+    const projectId = escape(project.id);
+    const trackingCode = escape(project.trackingCode);
+    const industryLabels = { fashion:"👗 مد و پوشاک", tech:"💻 فناوری", food:"🍕 رستوران", health:"🏥 پزشکی", education:"🎓 آموزش", realestate:"🏠 املاک", travel:"✈️ گردشگری", art:"🎨 هنر", sport:"⚽ ورزش", other:"📦 سایر" };
+    const styleLabels = { modern:"مدرن", classic:"کلاسیک", creative:"خلاقانه", luxury:"لوکس", cyberpunk:"سایبرپانک", minimal:"مینیمال", dark:"دارک" };
+    const timelineLabels = { urgent:"⚡ فوری", normal:"📅 عادی", flexible:"📆 منعطف", agreement:"🤝 توافقی" };
+    const industry = escape(industryLabels[project.industry] || project.industry || "نامشخص");
+    const style = escape(styleLabels[project.style] || project.style || "-");
+    const timelineLabel = escape(timelineLabels[project.timeline] || project.timeline || "-");
+    const createdAt = escape(project.persianDateTime || this.formatDate(project.createdAt));
+    const userNote = escape(project.userNote || "");
+    const events = Array.isArray(project.activityLog) ? project.activityLog.filter((log) => log && ["created","edited","progress","status"].includes(log.type)).slice(-5).reverse() : [];
+    const timeline = events.map((log) => {
+      const date = escape(log.persianDateTime || this.formatDate(log.timestamp));
+      const message = escape(log.message || "");
+      const icon = escape(this.getTimelineIcon(log.type));
+      const color = escape(this.getTimelineColor(log.type));
+      return `
+        <div class="timeline-item">
+          <div class="timeline-icon" style="background: ${color};">${icon}</div>
+          <div class="timeline-content">
+            <div class="timeline-date">${date}</div>
+            <div class="timeline-text">${message}</div>
+          </div>
+        </div>`;
+    }).join("");
     return `
-        <div class="project-card" data-project-id="${project.id}">
-            <div class="project-header">
-                <div class="project-info">
-                    <h3 style="display: flex; align-items: center; gap: 8px;">
-                        <span>${industry}</span>
-                        <span class="project-code" style="font-size: 11px; color: var(--neon);">${project.trackingCode}</span>
-                    </h3>
-                    <div style="font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 4px;">
-                        🎨 ${style} | ⏰ ${timelineLabel}
-                    </div>
-                </div>
-                <div class="project-status ${statusClass}">${statusLabel}</div>
-            </div>
-            
-            <div class="project-progress">
-                <div class="progress-circle-user" data-progress="${progress}">
-                    <svg viewBox="0 0 36 36">
-                        <circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
-                        <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#06b6d4" stroke-width="3" 
-                                stroke-dasharray="${progress}, 100" stroke-linecap="round" transform="rotate(-90 18 18)"/>
-                    </svg>
-                    <div class="progress-text-user">${progress}%</div>
-                </div>
-                <div class="progress-details">
-                    <div class="progress-stage">${statusLabel}</div>
-                    <div class="progress-date">ثبت: ${project.persianDateTime || this.formatDate(project.createdAt)}</div>
-                </div>
-            </div>
-            
-            ${
-              project.adminNote
-                ? `
-                <div class="admin-note">
-                    <div class="note-label">📝 یادداشت ادمین:</div>
-                    <div class="note-text">${project.adminNote}</div>
-                </div>
-            `
-                : ""
-            }
-            
-            ${
-              project.userNote
-                ? `
-                <div class="user-note-section">
-                    <div class="note-label">📝 یادداشت شما:</div>
-                    <div class="note-text">${project.userNote}</div>
-                    <button class="btn btn-sm btn-outline edit-user-note" data-id="${project.id}">✏️ ویرایش</button>
-                </div>
-            `
-                : `
-                <button class="btn btn-sm btn-outline edit-user-note" data-id="${project.id}">📝 افزودن یادداشت</button>
-            `
-            }
-            
-            ${
-              timeline
-                ? `
-                <details class="project-timeline">
-                    <summary>📊 تاریخچه فعالیت‌ها (${(project.activityLog || []).length} رویداد)</summary>
-                    <div class="timeline-container">${timeline}</div>
-                </details>
-            `
-                : ""
-            }
-            
-            <div class="project-actions">
-                <button class="btn btn-outline btn-sm" data-action="view">👁️ مشاهده</button>
-                <button class="btn btn-outline btn-sm" data-action="edit">✏️ ویرایش</button>
-                <button class="btn btn-outline btn-sm" data-action="message">💬 پیام</button>
-                <button class="btn btn-outline btn-sm btn-danger" data-action="delete">🗑️ حذف</button>
-            </div>
+      <div class="project-card" data-project-id="${projectId}">
+        <div class="project-header">
+          <div class="project-info">
+            <h3 style="display:flex;align-items:center;gap:8px;">
+              <span>${industry}</span>
+              <span class="project-code" style="font-size:11px;color:var(--neon);">${trackingCode}</span>
+            </h3>
+            <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px;">🎨 ${style} | ⏰ ${timelineLabel}</div>
+          </div>
+          <div class="project-status ${statusClass}">${statusLabel}</div>
         </div>
-    `;
+        <div class="project-progress">
+          <div class="progress-circle-user" data-progress="${progress}">
+            <svg viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#06b6d4" stroke-width="3" stroke-dasharray="${progress}, 100" stroke-linecap="round" transform="rotate(-90 18 18)"/>
+            </svg>
+            <div class="progress-text-user">${progress}%</div>
+          </div>
+          <div class="progress-details">
+            <div class="progress-stage">${statusLabel}</div>
+            <div class="progress-date">ثبت: ${createdAt}</div>
+          </div>
+        </div>
+        ${userNote ? `
+          <div class="user-note-section">
+            <div class="note-label">📝 یادداشت شما:</div>
+            <div class="note-text">${userNote}</div>
+            <button class="btn btn-sm btn-outline edit-user-note" data-id="${projectId}">✏️ ویرایش</button>
+          </div>` : `
+          <button class="btn btn-sm btn-outline edit-user-note" data-id="${projectId}">📝 افزودن یادداشت</button>`}
+        ${timeline ? `
+          <details class="project-timeline">
+            <summary>📊 تاریخچه فعالیت‌ها (${events.length} رویداد)</summary>
+            <div class="timeline-container">${timeline}</div>
+          </details>` : ""}
+        <div class="project-actions">
+          <button class="btn btn-outline btn-sm" data-action="view">👁️ مشاهده</button>
+          <button class="btn btn-outline btn-sm" data-action="edit">✏️ ویرایش</button>
+          <button class="btn btn-outline btn-sm" data-action="message">💬 پیام</button>
+          <button class="btn btn-outline btn-sm btn-danger" data-action="delete">🗑️ حذف</button>
+        </div>
+      </div>`;
   }
   setupProjectActions() {
     document.querySelectorAll(".project-card [data-action]").forEach((btn) => {

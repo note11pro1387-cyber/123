@@ -297,52 +297,41 @@ export class AdminPanel {
   }
   async updateField(id, field, value) {
     const token = this.getAdminToken();
-    if (!token) {
-      this.notification?.error("نشست ادمین منقضی شده");
-      return;
-    }
-
+    if (!token) { this.notification?.error("نشست ادمین منقضی شده"); return; }
     const idx = this.allData.findIndex((x) => x.id == id);
     if (idx === -1) return;
-    this.allData[idx][field] = field === "progress" ? parseInt(value) : value;
+    const nextValue = field === "progress" ? parseInt(value, 10) : value;
     try {
       const resp = await fetch(CONFIG.apiEndpoint + "?action=adminUpdate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,        },
-        body: JSON.stringify({
-          id,
-          field,
-          value: field === "progress" ? parseInt(value) : value,
-        }),
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ id, field, value: nextValue }),
       });
       if (!resp.ok) throw new Error("به‌روزرسانی انجام نشد");
+      this.allData[idx][field] = nextValue;
       this.notification?.success("به‌روزرسانی شد");
+      this.applyFilters();
       this.updateMetrics();
     } catch (e) {
-      this.notification?.error("خطا");
+      this.notification?.error(e.message || "به‌روزرسانی انجام نشد");
+      await this.loadData();
+      this.applyFilters();
     }
   }
   async deleteRequest(id) {
     const token = this.getAdminToken();
-    if (!token) {
-      this.notification?.error("نشست ادمین منقضی شده");
-      return;
-    }
-
-    this.allData = this.allData.filter((x) => x.id != id);
+    if (!token) { this.notification?.error("نشست ادمین منقضی شده"); return; }
     try {
-      await fetch(CONFIG.apiEndpoint + "?action=deleteRequest", {
+      const resp = await fetch(CONFIG.apiEndpoint + "?action=deleteRequest", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,        },
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
         body: JSON.stringify({ id }),
       });
-    } catch (e) {}
-    this.applyFilters();
-    this.updateMetrics();
+      if (!resp.ok) throw new Error("حذف انجام نشد");
+      this.allData = this.allData.filter((x) => x.id != id);
+      this.applyFilters();
+      this.updateMetrics();
+    } catch (e) { this.notification?.error(e.message || "خطا در حذف"); }
   }
   renderPagination() {
     const total = Math.ceil(this.filteredData.length / this.perPage);
