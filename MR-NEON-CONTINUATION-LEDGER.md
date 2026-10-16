@@ -13,13 +13,16 @@ Updated: 2026-10-16
 - `499e658fe5b4964a6826cee387b747b433aeb205`: environment-based server secrets, CORS/TLS changes, JSON persistence helpers and role-aware sessions.
 - `eca534f971a84098f1a555b61743116dbcf2030b`: admin login handler, recovery no longer accepts a client-selected target user ID, OTP TTL 120 seconds, removed frontend API-key use, removed NEO local-storage false-success fallback, aligned action names.
 - `19095e191e36d8bc47624f7ea1122238b5419459`: authenticated project save, server-generated IDs/tracking codes, customer DTO separation, password-hash filtering, atomic JSON writer and same-origin CORS handling.
-- `68025541193f434466052d07d3bb7a24b9770348`: removed remaining frontend credential properties, restricted public verification endpoint, escaped customer project-card output, stopped showing admin notes in customer card, admin mutations now require successful HTTP responses.
+- `68025541193f434466052d07d3bb7a24b9770348`: removed remaining frontend credential properties, restricted the public verification endpoint, escaped customer project-card output, removed admin-note rendering from the customer card, and made admin mutations depend on successful HTTP responses.
+- `14a74dc68e8e03d4bd95f4638571d2fea35b24b1`: added this continuation ledger.
+- `ec0a64f7b018cf5076ea7342e8cf5148d50a65d6`: added `data/.htaccess` to deny direct HTTP access to runtime data files on Apache.
 
 ## Known limits
 - Telegram recovery requires a server-stored numeric `telegramChatId`; legacy accounts may not have one. The legacy registration delivery flow is not yet fully redesigned around verified numeric Telegram chat IDs.
 - Email recovery requires `MR_NEON_MAIL_FROM` and a working host mail transport.
 - Admin login, Telegram notifications and cross-origin hosting require the corresponding server environment variables to be configured.
 - The public repository's earlier Git history may still contain exposed credentials. Rotating/revoking them through their providers remains required; source cleanup does not revoke them.
+- The Apache data-directory rule does not replace equivalent deny rules for Nginx or other hosting stacks.
 - JSON storage remains the legacy architecture. DB/Auth integration is not verified.
 
 ## Verification
