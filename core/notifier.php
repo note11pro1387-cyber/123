@@ -11,6 +11,7 @@
  */
 
 function sendTelegramMessage(string $text, ?array $keyboard = null, ?string $chatId = null): bool {
+    if (TELEGRAM_BOT_TOKEN === '') { error_log('Telegram delivery is not configured.'); return false; }
     $url = "https://api.telegram.org/bot" . TELEGRAM_BOT_TOKEN . "/sendMessage";
     $data = [
         'chat_id' => $chatId ?? TELEGRAM_ADMIN_CHAT_ID,
@@ -28,8 +29,8 @@ function sendTelegramMessage(string $text, ?array $keyboard = null, ?string $cha
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
@@ -55,10 +56,12 @@ function sendTelegramMessage(string $text, ?array $keyboard = null, ?string $cha
             'content' => http_build_query($data),
             'timeout' => 15,
         ],
-        'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
+        'ssl' => ['verify_peer' => true, 'verify_peer_name' => true]
     ];
     $result = @file_get_contents($url, false, stream_context_create($options));
-    return $result !== false;
+    if ($result === false) return false;
+    $response = json_decode($result, true);
+    return is_array($response) && ($response['ok'] ?? false) === true;
 }
 
 function sendVerificationToTelegram(string $telegramId, string $code, string $fullName, string $type = 'register'): bool {

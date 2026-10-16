@@ -20,14 +20,21 @@ header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 
-$allowedOrigin = $_SERVER['HTTP_ORIGIN'] ?? '*';
-header("Access-Control-Allow-Origin: $allowedOrigin");
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = array_values(array_filter(array_map('trim', explode(',', MR_NEON_ALLOWED_ORIGINS))));
+if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Access-Control-Allow-Credentials: true');
+    header('Vary: Origin');
+}
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-API-Key, Authorization');
-header('Access-Control-Allow-Credentials: true');
-
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+    if ($origin === '' || !in_array($origin, $allowedOrigins, true)) {
+        http_response_code(403);
+        exit;
+    }
+    http_response_code(204);
     exit;
 }
 
@@ -53,20 +60,57 @@ function readJsonFile(string $filePath): array {
     return is_array($data) ? $data : [];
 }
 
-function writeJsonFile(string $filePath, array $data): void {
-    $fp = fopen($filePath, 'c+');
-    if (!$fp) {
-        error_log("Failed to open: $filePath");
-        return;
+function writeJsonFile(string $filePath, array $data): bool {
+    $lock = @fopen($filePath . '.write.lock', 'c');
+    if (!$lock) throw new RuntimeException('Storage lock unavailable.');
+    try {
+        if (!flock($lock, LOCK_EX)) throw new RuntimeException('Storage lock unavailable.');
+        $encoded = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        $fp = @fopen($filePath, 'c+');
+        if (!$fp) throw new RuntimeException('Storage write unavailable.');
+        try {
+            if (!flock($fp, LOCK_EX)) throw new RuntimeException('Storage write lock unavailable.');
+            if (!ftruncate($fp, 0) || !rewind($fp)) throw new RuntimeException('Storage write failed.');
+            $length = strlen($encoded);
+            $written = 0;
+            while ($written < $length) {
+                $n = fwrite($fp, substr($encoded, $written));
+                if ($n === false || $n === 0) throw new RuntimeException('Storage write failed.');
+                $written += $n;
+            }
+            if (!fflush($fp)) throw new RuntimeException('Storage flush failed.');
+            if (function_exists('fsync')) @fsync($fp);
+            flock($fp, LOCK_UN);
+        } finally { fclose($fp); }
+        flock($lock, LOCK_UN);
+        return true;
+    } finally {
+        @flock($lock, LOCK_UN);
+        fclose($lock);
     }
-    if (flock($fp, LOCK_EX)) {
-        ftruncate($fp, 0);
-        rewind($fp);
-        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-        fflush($fp);
-        flock($fp, LOCK_UN);
+}
+
+function mutateJsonFile(string $filePath, callable $mutator): array {
+    $lock = @fopen($filePath . '.transaction.lock', 'c');
+    if (!$lock) throw new RuntimeException('Storage transaction lock unavailable.');
+    try {
+        if (!flock($lock, LOCK_EX)) throw new RuntimeException('Storage transaction lock unavailable.');
+        $raw = is_file($filePath) ? @file_get_contents($filePath) : '[]';
+        if ($raw === false) throw new RuntimeException('Storage read unavailable.');
+        if (trim($raw) === '') $raw = '[]';
+        $current = json_decode($raw, true);
+        if (!is_array($current) || json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException('Storage JSON invalid; refusing overwrite.');
+        }
+        $next = $mutator($current);
+        if (!is_array($next)) throw new RuntimeException('Storage mutation returned invalid data.');
+        writeJsonFile($filePath, $next);
+        flock($lock, LOCK_UN);
+        return $next;
+    } finally {
+        @flock($lock, LOCK_UN);
+        fclose($lock);
     }
-    fclose($fp);
 }
 
 function jsonSuccess($data = null): void {
@@ -82,7 +126,7 @@ function jsonError(string $message, int $code = 400, $details = null): void {
     http_response_code($code);
     $response = ['success' => false, 'error' => $message];
     if ($details) $response['details'] = $details;
-    error_log("API Error [$code]: $message" . ($details ? ' - ' . json_encode($details) : ''));
+    error_log('API Error [' . $code . ']: ' . preg_replace('/[^A-Za-z0-9 _.-]/', '?', $message));
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -94,7 +138,7 @@ function getInput(): array {
     $data = json_decode($raw, true);
     if (json_last_error() !== JSON_ERROR_NONE) {
         error_log('JSON parse error: ' . json_last_error_msg());
-        jsonError('Invalid JSON: ' . json_last_error_msg(), 400);
+        jsonError('Invalid JSON request body', 400);
     }
     return is_array($data) ? $data : [];
 }
@@ -224,11 +268,6 @@ function checkRateLimit(string $ip, string $action, int $maxRequests = 30, int $
 }
 
 // ====================== 8. AUTHENTICATION ======================
-function verifyApiKey(): void {
-    $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-    if ($apiKey !== API_KEY) jsonError('Invalid or missing API Key', 401);
-}
-
 function getBearerToken(): ?string {
     $auth = $_SERVER['HTTP_AUTHORIZATION'] ??
             $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
@@ -245,29 +284,28 @@ function getBearerToken(): ?string {
 function verifyUserSession(): array {
     $token = getBearerToken();
     if (!$token) jsonError('Authentication required', 401);
-    
     $sessions = readJsonFile(DATA_DIR . '/sessions.json');
-    if (!isset($sessions[$token])) jsonError('Invalid session', 401);
-    
+    if (!isset($sessions[$token]) || !is_array($sessions[$token])) jsonError('Invalid session', 401);
     $session = $sessions[$token];
-    if ($session['expires_at'] < time()) {
+    if (($session['role'] ?? 'user') !== 'user') jsonError('User session required', 403);
+    if (($session['expires_at'] ?? 0) < time()) {
         unset($sessions[$token]);
         writeJsonFile(DATA_DIR . '/sessions.json', $sessions);
         jsonError('Session expired', 401);
     }
-    
     $sessions[$token]['last_activity'] = time();
     writeJsonFile(DATA_DIR . '/sessions.json', $sessions);
     return $session;
 }
 
-function createSession(string $userId, array $userData): string {
+function createSession(string $userId, array $userData, string $role = 'user'): string {
     $sessions = readJsonFile(DATA_DIR . '/sessions.json');
     $sessionId = bin2hex(random_bytes(32));
     
     $sessions[$sessionId] = [
         'user_id' => $userId,
         'user_data' => $userData,
+        'role' => $role,
         'created_at' => time(),
         'expires_at' => time() + SESSION_TIMEOUT,
         'last_activity' => time(),
@@ -278,31 +316,16 @@ function createSession(string $userId, array $userData): string {
 }
 
 function verifyAdminAuth(): void {
-    $username = $_SERVER['PHP_AUTH_USER'] ?? null;
-    $password = $_SERVER['PHP_AUTH_PW'] ?? null;
-    
-    // Fallback برای XAMPP و هاست‌های ایرانی
-    if (!$username || !$password) {
-        $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? 
-                $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
-        
-        if (empty($auth) && function_exists('apache_request_headers')) {
-            $headers = apache_request_headers();
-            $auth = $headers['Authorization'] ?? $headers['authorization'] ?? '';
-        }
-        
-        if (preg_match('/Basic\s+(.*)$/i', $auth, $matches)) {
-            $decoded = base64_decode($matches[1]);
-            if ($decoded !== false && strpos($decoded, ':') !== false) {
-                list($username, $password) = explode(':', $decoded, 2);
-            }
-        }
-    }
-    
-    if ($username !== ADMIN_USERNAME || $password !== ADMIN_PASSWORD) {
-        header('WWW-Authenticate: Basic realm="MR NEON Admin"');
+    $token = getBearerToken();
+    if (!$token) jsonError('Admin authentication required', 401);
+    $sessions = readJsonFile(DATA_DIR . '/sessions.json');
+    if (!isset($sessions[$token]) || !is_array($sessions[$token])) jsonError('Invalid admin session', 401);
+    $session = $sessions[$token];
+    if (($session['role'] ?? '') !== 'admin' || ($session['expires_at'] ?? 0) < time()) {
         jsonError('Admin authentication required', 401);
     }
+    $sessions[$token]['last_activity'] = time();
+    writeJsonFile(DATA_DIR . '/sessions.json', $sessions);
 }
 
 // ====================== 9. ROUTE HANDLER ======================
@@ -312,6 +335,7 @@ $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 $rateLimits = [
     'register' => [5, 300],
     'login' => [10, 300],
+    'adminLogin' => [5, 300],
     'forgotPassword' => [5, 600],
     'sendVerificationCode' => [5, 300],
     'verifyRegisterCode' => [10, 300],
@@ -325,17 +349,13 @@ if (!checkRateLimit($ip, $action, $maxReqs, $window)) {
     jsonError('Too many requests. Please try again later.', 429);
 }
 
-$publicActions = [
-    'register', 'login', 'forgotPassword', 'verifyResetCode',
-    'sendVerificationCode', 'verifyRegisterCode', 'resendVerificationCode'
-];
-
-if (!in_array($action, $publicActions)) verifyApiKey();
+// Each handler enforces its own user-session or admin-session authorization.
 
 try {
     switch ($action) {
         case 'register': handleRegister(); break;
         case 'login': handleLogin(); break;
+        case 'adminLogin': handleAdminLogin(); break;
         case 'forgotPassword': handleForgotPassword(); break;
         case 'verifyResetCode': handleVerifyResetCode(); break;
         case 'sendVerificationCode': handleSendVerificationCode(); break;
@@ -353,11 +373,12 @@ try {
         case 'markNotificationRead': handleMarkNotificationRead(); break;
         case 'getActiveProjectsCount': handleGetActiveProjectsCount(); break;
         case 'deleteRequest': handleDeleteRequest(); break;
+        case 'delete': handleDeleteRequest(); break;
         case 'changeUsername': handleChangeUsername(); break;
         case 'changePassword': handleChangePassword(); break;
         default: jsonError('Unknown action: ' . $action, 400);
     }
 } catch (Throwable $e) {
-    error_log('API Exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-    jsonError('Server error: ' . $e->getMessage(), 500);
+    error_log('API exception in ' . basename($e->getFile()) . ':' . $e->getLine() . ' (' . get_class($e) . ')');
+    jsonError('Internal server error', 500);
 }
