@@ -1,0 +1,22 @@
+CREATE TABLE notifications (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    public_id CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    recipient_type ENUM('user','admin') NOT NULL,
+    recipient_user_id BIGINT UNSIGNED NULL,
+    recipient_admin_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    project_id BIGINT UNSIGNED NULL,
+    category VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    title VARCHAR(180) NOT NULL,
+    body VARCHAR(1000) NOT NULL,
+    target_path VARCHAR(255) NULL,
+    read_at DATETIME(6) NULL,
+    created_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_notifications_public_id (public_id),
+    KEY ix_notifications_user_inbox (recipient_user_id, read_at, created_at),
+    KEY ix_notifications_admin_inbox (recipient_type, recipient_admin_id, read_at, created_at),
+    KEY ix_notifications_project (project_id, created_at),
+    CONSTRAINT fk_notifications_user FOREIGN KEY (recipient_user_id) REFERENCES users(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_notifications_project FOREIGN KEY (project_id) REFERENCES projects(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT chk_notifications_recipient CHECK ((recipient_type = 'user' AND recipient_user_id IS NOT NULL AND recipient_admin_id IS NULL) OR (recipient_type = 'admin' AND recipient_user_id IS NULL AND recipient_admin_id IS NOT NULL))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

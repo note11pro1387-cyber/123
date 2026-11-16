@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">MR NEON</title>
+  <defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8e5a0"/><stop offset="1" stop-color="#b88a37"/></linearGradient></defs>
+  <rect width="64" height="64" rx="14" fill="#080b12"/>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#22d3ee" stroke-opacity=".72" stroke-width="1.5"/>
+  <path d="M12 45V19h5l8 12 8-12h5v26h-5V28l-8 11-8-11v17z" fill="url(#gold)" transform="translate(2 0) scale(.9 1)"/>
+  <circle cx="49" cy="45" r="3.5" fill="#22d3ee"/>
+</svg>

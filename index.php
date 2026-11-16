@@ -1,3 +1,11 @@
+<?php
+require_once __DIR__ . '/app/support/CspReportOnly.php';
+CspReportOnly::sendHtmlSecurityHeaders();
+require_once __DIR__ . '/app/support/PublicBaseUrl.php';
+$publicBaseUrl = mrneonNormalizePublicBaseUrl((string) (getenv('MRNEON_PUBLIC_BASE_URL') ?: ''));
+$publicHomeUrl = $publicBaseUrl !== '' ? $publicBaseUrl . '/' : '';
+$publicOgImageUrl = $publicBaseUrl !== '' ? $publicBaseUrl . '/assets/images/og-image.png' : '';
+?>
 <!--
   🧬 MR NEON ARCHITECTURE COMPONENT
   📄 File: index.php
@@ -9,103 +17,61 @@
 <html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
-    />
-    <title>MR NEON | تیم برنامه‌نویسی وب حرفه‌ای | طراحی سایت در ۷۲ ساعت</title>
-    <meta
-      name="description"
-      content="تیم MR NEON - طراحی و توسعه وب‌سایت‌های حرفه‌ای با تحویل ۷۲ ساعته، طراحی UI/UX اختصاصی، فروشگاه اینترنتی و سایت شرکتی"
-    />
-    <meta
-      name="keywords"
-      content="طراحی سایت, برنامه‌نویسی وب, فروشگاه اینترنتی, UI/UX, طراحی واکنش‌گرا, سئو, تیم برنامه‌نویسی"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>MR NEON | طراحی و توسعه وب‌سایت</title>
+    <meta name="description" content="MR NEON؛ طراحی و توسعه وب‌سایت، رابط کاربری و تجربه کاربری و راهکارهای دیجیتال متناسب با نیاز هر پروژه." />
     <meta name="theme-color" content="#0f172a" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta
-      name="twitter:title"
-      content="MR NEON | تیم برنامه‌نویسی وب حرفه‌ای"
-    />
-    <meta
-      name="twitter:description"
-      content="طراحی و توسعه وب‌سایت در کمتر از ۷۲ ساعت با کیفیت عالی"
-    />
-    <meta
-      name="twitter:image"
-      content="https://mrneon.dev/assets/images/og-image.jpg"
-    />
-    <meta property="og:title" content="MR NEON | تیم برنامه‌نویسی وب حرفه‌ای" />
-    <meta
-      property="og:description"
-      content="طراحی و توسعه وب‌سایت در کمتر از ۷۲ ساعت با کیفیت عالی"
-    />
+    <meta name="robots" content="<?= $publicBaseUrl !== '' ? 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' : 'noindex, nofollow, noarchive' ?>" />
+    <meta name="twitter:card" content="<?= $publicOgImageUrl !== '' ? 'summary_large_image' : 'summary' ?>" />
+    <meta name="twitter:title" content="MR NEON | طراحی و توسعه وب‌سایت" />
+    <meta name="twitter:description" content="طراحی و توسعه وب‌سایت و تجربه‌های دیجیتال متناسب با نیاز پروژه." />
+    <meta property="og:title" content="MR NEON | طراحی و توسعه وب‌سایت" />
+    <meta property="og:description" content="طراحی و توسعه وب‌سایت، رابط کاربری و تجربه کاربری و راهکارهای دیجیتال متناسب با نیاز هر پروژه." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://mrneon.dev" />
-    <meta
-      property="og:image"
-      content="https://mrneon.dev/assets/images/og-image.jpg"
-    />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💠%3C/text%3E%3C/svg%3E"
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="preload"
-      href="assets/fonts/Vazirmatn/webfonts/Vazirmatn-Regular.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin="anonymous"
-    />
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-    <link rel="canonical" href="https://mrneon.dev/" />
+    <meta property="og:site_name" content="MR NEON" />
+    <meta property="og:locale" content="fa_IR" />
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png" />
+    <link rel="preload" href="assets/fonts/Vazirmatn/webfonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="stylesheet" href="css/global.css" />
     <link rel="stylesheet" href="css/components.css" />
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "MR NEON",
-        "alternateName": "تیم برنامه‌نویسی MR NEON",
-        "url": "https://mrneon.dev",
-        "logo": "https://mrneon.dev/assets/images/logo.png",
-        "description": "تیم تخصصی طراحی و توسعه وب‌سایت با تحویل ۷۲ ساعته",
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "telephone": "+98-912-000-0000",
-          "contactType": "sales",
-          "availableLanguage": ["Persian", "English"],
-          "areaServed": "IR"
-        },
-        "sameAs": [
-          "https://t.me/MR_NEON_TEAM",
-          "https://instagram.com/mrneon.dev",
-          "https://linkedin.com/company/mrneon"
-        ],
-        "address": {
-          "@type": "PostalAddress",
-          "addressCountry": "IR",
-          "addressLocality": "تهران"
-        }
-      }
-    </script>
+    <link rel="stylesheet" href="css/tech-curved-loop.css" />
+    <?php if ($publicBaseUrl !== ''): ?>
+      <link rel="canonical" href="<?= htmlspecialchars($publicHomeUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" />
+      <meta property="og:url" content="<?= htmlspecialchars($publicHomeUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" />
+      <meta property="og:image" content="<?= htmlspecialchars($publicOgImageUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:alt" content="کارت معرفی MR NEON برای طراحی و توسعه وب‌سایت" />
+      <meta name="twitter:image" content="<?= htmlspecialchars($publicOgImageUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" />
+      <meta name="twitter:image:alt" content="کارت معرفی MR NEON برای طراحی و توسعه وب‌سایت" />
+      <?php
+        $organizationSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+            'name' => 'MR NEON',
+            'url' => $publicHomeUrl,
+            'logo' => $publicBaseUrl . '/assets/images/logo.png',
+            'description' => 'طراحی و توسعه وب‌سایت و راهکارهای دیجیتال متناسب با نیاز پروژه.',
+        ];
+      ?>
+      <script type="application/ld+json"><?= json_encode($organizationSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+    <?php endif; ?>
   </head>
   <body>
     <a href="#main-content" class="skip-link">پرش به محتوای اصلی</a>
 
-    <div class="loading-screen" id="loadingScreen">
+    <div class="loading-screen" id="loadingScreen" data-state="loading" aria-busy="true" aria-hidden="false">
       <div class="loading-content">
-        <div class="neon-loader"></div>
-        <div class="loading-text">MR•NEON</div>
+        <div class="neon-loader" aria-hidden="true"></div>
+        <div class="loading-text" aria-hidden="true">MR•NEON</div>
+        <p class="loading-status" id="loadingStatus" role="status" aria-live="polite" aria-atomic="true">در حال آماده‌سازی رابط سایت…</p>
+        <div class="loading-error" id="loadingError" role="alert" aria-live="assertive" aria-atomic="true" hidden>
+          <p>راه‌اندازی کامل نشد. برای بارگذاری دوباره تلاش کنید.</p>
+          <button type="button" class="btn btn-primary loading-retry" id="loadingRetryBtn">بارگذاری دوباره</button>
+        </div>
       </div>
     </div>
 
@@ -509,17 +475,15 @@
             </button>
           </div>
           <div class="portfolio-grid" id="portfolioGrid">
-            <div class="portfolio-card" data-category="ecommerce">
+            <div class="portfolio-card" data-project="1" data-category="ecommerce">
               <div class="portfolio-image">
                 <img
                   src="assets/images/project-1.jpg"
                   alt="فروشگاه مد و زیبایی - طراحی فروشگاه آنلاین"
                   loading="lazy"
-                  onerror="
-                    this.onerror = null;
-                    this.src = 'assets/images/fallback.jpg';
-                  "
-                />
+                  data-image-fallback="replace"
+                  data-image-fallback-alt="تصویر نمونه‌کار در دسترس نیست"
+                width="400" height="280" decoding="async" />
                 <div class="portfolio-overlay">
                   <div class="overlay-content">
                     <h3 class="overlay-title">فروشگاه مد و زیبایی</h3>
@@ -527,13 +491,9 @@
                     <p class="overlay-description">
                       طراحی کامل فروشگاه آنلاین با سیستم مدیریت محصولات پیشرفته
                     </p>
-                    <button
-                      type="button"
-                      class="btn btn-outline-light view-details"
-                      data-project="1"
-                    >
+                    <span class="btn btn-outline-light view-details" aria-hidden="true">
                       مشاهده جزئیات
-                    </button>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -542,17 +502,15 @@
                 <span class="portfolio-category">🛒 فروشگاهی</span>
               </div>
             </div>
-            <div class="portfolio-card" data-category="webapp">
+            <div class="portfolio-card" data-project="2" data-category="webapp">
               <div class="portfolio-image">
                 <img
                   src="assets/images/project-2.jpg"
                   alt="پلتفرم آموزش آنلاین - وب اپلیکیشن آموزشی"
                   loading="lazy"
-                  onerror="
-                    this.onerror = null;
-                    this.src = 'assets/images/fallback.jpg';
-                  "
-                />
+                  data-image-fallback="replace"
+                  data-image-fallback-alt="تصویر نمونه‌کار در دسترس نیست"
+                width="800" height="600" decoding="async" />
                 <div class="portfolio-overlay">
                   <div class="overlay-content">
                     <h3 class="overlay-title">پلتفرم آموزش آنلاین</h3>
@@ -560,13 +518,9 @@
                     <p class="overlay-description">
                       پلتفرم تعاملی آموزش با سیستم ویدیو، تمرین و آزمون
                     </p>
-                    <button
-                      type="button"
-                      class="btn btn-outline-light view-details"
-                      data-project="2"
-                    >
+                    <span class="btn btn-outline-light view-details" aria-hidden="true">
                       مشاهده جزئیات
-                    </button>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -575,17 +529,15 @@
                 <span class="portfolio-category">📱 وب‌اپ</span>
               </div>
             </div>
-            <div class="portfolio-card" data-category="corporate">
+            <div class="portfolio-card" data-project="3" data-category="corporate">
               <div class="portfolio-image">
                 <img
                   src="assets/images/project-3.jpg"
                   alt="سایت شرکتی فناوری - طراحی مدرن شرکتی"
                   loading="lazy"
-                  onerror="
-                    this.onerror = null;
-                    this.src = 'assets/images/fallback.jpg';
-                  "
-                />
+                  data-image-fallback="replace"
+                  data-image-fallback-alt="تصویر نمونه‌کار در دسترس نیست"
+                width="800" height="600" decoding="async" />
                 <div class="portfolio-overlay">
                   <div class="overlay-content">
                     <h3 class="overlay-title">سایت شرکتی فناوری</h3>
@@ -593,13 +545,9 @@
                     <p class="overlay-description">
                       طراحی مدرن برای معرفی خدمات شرکت فناوری
                     </p>
-                    <button
-                      type="button"
-                      class="btn btn-outline-light view-details"
-                      data-project="3"
-                    >
+                    <span class="btn btn-outline-light view-details" aria-hidden="true">
                       مشاهده جزئیات
-                    </button>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -608,17 +556,15 @@
                 <span class="portfolio-category">🏢 شرکتی</span>
               </div>
             </div>
-            <div class="portfolio-card" data-category="webapp">
+            <div class="portfolio-card" data-project="4" data-category="webapp">
               <div class="portfolio-image">
                 <img
                   src="assets/images/project-4.jpg"
                   alt="وب‌اپ مدیریت پروژه - اپلیکیشن تحت وب"
                   loading="lazy"
-                  onerror="
-                    this.onerror = null;
-                    this.src = 'assets/images/fallback.jpg';
-                  "
-                />
+                  data-image-fallback="replace"
+                  data-image-fallback-alt="تصویر نمونه‌کار در دسترس نیست"
+                width="400" height="280" decoding="async" />
                 <div class="portfolio-overlay">
                   <div class="overlay-content">
                     <h3 class="overlay-title">وب‌اپ مدیریت پروژه</h3>
@@ -626,13 +572,9 @@
                     <p class="overlay-description">
                       اپلیکیشن تحت وب برای مدیریت تیم و تسک‌ها
                     </p>
-                    <button
-                      type="button"
-                      class="btn btn-outline-light view-details"
-                      data-project="4"
-                    >
+                    <span class="btn btn-outline-light view-details" aria-hidden="true">
                       مشاهده جزئیات
-                    </button>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -641,17 +583,15 @@
                 <span class="portfolio-category">🔧 وب‌اپ</span>
               </div>
             </div>
-            <div class="portfolio-card" data-category="ecommerce">
+            <div class="portfolio-card" data-project="5" data-category="ecommerce">
               <div class="portfolio-image">
                 <img
                   src="assets/images/project-5.jpg"
                   alt="سایت رستوران لوکس - رزرو آنلاین"
                   loading="lazy"
-                  onerror="
-                    this.onerror = null;
-                    this.src = 'assets/images/fallback.jpg';
-                  "
-                />
+                  data-image-fallback="replace"
+                  data-image-fallback-alt="تصویر نمونه‌کار در دسترس نیست"
+                width="400" height="280" decoding="async" />
                 <div class="portfolio-overlay">
                   <div class="overlay-content">
                     <h3 class="overlay-title">سایت رستوران لوکس</h3>
@@ -659,13 +599,9 @@
                     <p class="overlay-description">
                       سایت رزرو آنلاین با منوی دیجیتال و سیستم پرداخت
                     </p>
-                    <button
-                      type="button"
-                      class="btn btn-outline-light view-details"
-                      data-project="5"
-                    >
+                    <span class="btn btn-outline-light view-details" aria-hidden="true">
                       مشاهده جزئیات
-                    </button>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -726,7 +662,7 @@
             </svg>
           </button>
           <div class="modal-body" id="modalBody">
-            <h3 id="modalTitle" style="display: none"></h3>
+            <h3 id="modalTitle" hidden></h3>
           </div>
         </div>
       </div>
@@ -744,9 +680,13 @@
             <div class="team-card">
               <div class="team-avatar">
                 <img
-                  src="assets/images/team-mj.jpg"
-                  alt="گروه محمدجواد قادری"
+                  src="assets/images/team-mj.jpg" loading="lazy"
+                  alt="محمدجواد قادری"
                   class="team-photo"
+                  width="880" height="1168"
+                  decoding="async"
+                  data-image-fallback="replace"
+                  data-image-fallback-alt="تصویر عضو تیم در دسترس نیست"
                 />
                 <div class="avatar-glow"></div>
               </div>
@@ -764,44 +704,6 @@
                   <span class="skill-tag">Responsive Design</span>
                 </div>
                 <div class="team-social">
-                  <a
-                    href="https://linkedin.com"
-                    class="social-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="لینکدین محمدجواد"
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M16 8C17.5913 8 19.1174 8.63214 20.2426 9.75736C21.3679 10.8826 22 12.4087 22 14V21H18V14C18 13.4696 17.7893 12.9609 17.4142 12.5858C17.0391 12.2107 16.5304 12 16 12C15.4696 12 14.9609 12.2107 14.5858 12.5858C14.2107 12.9609 14 13.4696 14 14V21H10V14C10 12.4087 10.6321 10.8826 11.7574 9.75736C12.8826 8.63214 14.4087 8 16 8Z"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M6 9H2V21H6V9Z"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M4 6C5.10457 6 6 5.10457 6 4C6 2.89543 5.10457 2 4 2C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6Z"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </a>
                   <a
                     href="mailto:mj@mrneon.dev"
                     class="social-link"
@@ -837,9 +739,13 @@
             <div class="team-card">
               <div class="team-avatar">
                 <img
-                  src="assets/images/team-armin.jpg"
-                  alt="گروه آرمین فرزانه"
+                  src="assets/images/team-armin.jpg" loading="lazy"
+                  alt="آرمین فرزانه"
                   class="team-photo"
+                  width="731" height="1280"
+                  decoding="async"
+                  data-image-fallback="replace"
+                  data-image-fallback-alt="تصویر عضو تیم در دسترس نیست"
                 />
                 <div class="avatar-glow"></div>
               </div>
@@ -857,44 +763,6 @@
                   <span class="skill-tag">Database Design</span>
                 </div>
                 <div class="team-social">
-                  <a
-                    href="https://linkedin.com"
-                    class="social-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="لینکدین آرمین"
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M16 8C17.5913 8 19.1174 8.63214 20.2426 9.75736C21.3679 10.8826 22 12.4087 22 14V21H18V14C18 13.4696 17.7893 12.9609 17.4142 12.5858C17.0391 12.2107 16.5304 12 16 12C15.4696 12 14.9609 12.2107 14.5858 12.5858C14.2107 12.9609 14 13.4696 14 14V21H10V14C10 12.4087 10.6321 10.8826 11.7574 9.75736C12.8826 8.63214 14.4087 8 16 8Z"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M6 9H2V21H6V9Z"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M4 6C5.10457 6 6 5.10457 6 4C6 2.89543 5.10457 2 4 2C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6Z"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </a>
                   <a
                     href="mailto:armin@mrneon.dev"
                     class="social-link"
@@ -931,337 +799,76 @@
         </div>
       </section>
 
-      <section class="tech-stack" id="tech" aria-label="تکنولوژی‌ها">
+      <section class="tech-stack" id="tech" aria-labelledby="tech-title">
         <div class="container">
           <div class="section-header">
-            <h2 class="section-title">تکنولوژی‌هایی که استفاده می‌کنیم</h2>
+            <h2 class="section-title" id="tech-title">فناوری‌هایی که متناسب با نیاز پروژه انتخاب می‌کنیم</h2>
             <div class="section-line"><div class="line-glow"></div></div>
-            <p class="section-description">ابزارها و فریمورک‌های روز دنیا</p>
+            <p class="section-description">
+              ترکیب ابزارها با توجه به هدف، پیچیدگی، نگهداشت و الزامات هر پروژه انتخاب می‌شود.
+            </p>
           </div>
-          <div class="marquee-container">
-            <div class="marquee-track" id="marqueeTrack">
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <circle cx="12" cy="12" r="10" fill="#61DAFB" />
-                  </svg>
-                </div>
-                <span class="tech-name">React</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                      stroke="#4FC08D"
-                      stroke-width="2"
-                      fill="none"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">Vue.js</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2L2 19h20L12 2zm0 3l7 12H5l7-12z"
-                      fill="#fff"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">Next.js</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <rect
-                      x="2"
-                      y="2"
-                      width="20"
-                      height="20"
-                      rx="4"
-                      fill="#3178C6"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">TypeScript</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M3 3h18v18H3V3zm4.5 14.5h3V9h-3v8.5zm6 0h3V9h-3v8.5z"
-                      fill="#F7DF1E"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">JavaScript</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M1.5 0h21l-1.5 22.5-9 2.5-9-2.5L1.5 0z"
-                      fill="#E34F26"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">HTML5</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M1.5 0h21l-1.5 22.5-9 2.5-9-2.5L1.5 0z"
-                      fill="#1572B6"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">CSS3</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"
-                      fill="#06B6D4"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">Tailwind CSS</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path d="M4 4h16v16H4V4zm2 2v12h12V6H6z" fill="#7952B3" />
-                  </svg>
-                </div>
-                <span class="tech-name">Bootstrap</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.5L19.5 8 12 11.5 4.5 8 12 4.5zM4 9.5l7 3.5v6.5l-7-3.5V9.5zm16 0v6.5l-7 3.5v-6.5l7-3.5z"
-                      fill="#339933"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">Node.js</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-8h-2V7h2v2z"
-                      fill="#000000"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">Express.js</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                      fill="#3776AB"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">Python</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                      stroke="#092E20"
-                      stroke-width="2"
-                      fill="none"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">Django</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                      stroke="#FF2D20"
-                      stroke-width="2"
-                      fill="none"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">Laravel</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                      fill="#777BB4"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">PHP</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                      fill="#47A248"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">MongoDB</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                      fill="#336791"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">PostgreSQL</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path d="M4 4h16v16H4V4zm2 2v12h12V6H6z" fill="#4479A1" />
-                  </svg>
-                </div>
-                <span class="tech-name">MySQL</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                      fill="#2496ED"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">Docker</span>
-              </div>
-              <div class="marquee-item">
-                <div class="tech-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                      fill="#F05032"
-                    />
-                  </svg>
-                </div>
-                <span class="tech-name">Git</span>
-              </div>
-            </div>
+
+          <div
+            class="tech-curved-loop"
+            id="techCurvedLoop"
+            role="region"
+            aria-roledescription="فهرست فناوری‌ها"
+            aria-label="فناوری‌های مورد استفاده: React، Vue.js، Next.js، TypeScript، JavaScript، HTML5، CSS3، Tailwind CSS، Bootstrap، Node.js، Express.js، Python، Django، Laravel، PHP، MongoDB، PostgreSQL، MySQL، Docker و Git."
+          >
+            <svg
+              class="tech-curved-loop__svg"
+              viewBox="0 0 1200 360"
+              preserveAspectRatio="xMidYMid meet"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <defs>
+                <path id="techCurvedLoopPath" d="M -1600 180 Q -1200 48 -800 180 T 0 180 T 800 180 T 1600 180 T 2400 180 T 3200 180 T 4000 180 T 4800 180 T 5600 180 T 6400 180 T 7200 180 T 8000 180 T 8800 180 T 9600 180 T 10400 180 T 11200 180 T 12000 180 T 12800 180 T 13600 180 T 14400 180 T 15200 180" />
+                <linearGradient
+                  id="techCurvedLoopGradient"
+                  gradientUnits="userSpaceOnUse"
+                  x1="0"
+                  y1="0"
+                  x2="1200"
+                  y2="0"
+                >
+                  <stop offset="0" stop-color="#0d9488" />
+                  <stop offset="0.35" stop-color="#06b6d4" />
+                  <stop offset="0.7" stop-color="#22d3ee" />
+                  <stop offset="1" stop-color="#059669" />
+                </linearGradient>
+              </defs>
+              <text class="tech-curved-loop__text" direction="ltr" fill="url(#techCurvedLoopGradient)">
+                <textPath
+                  id="techCurvedLoopTextPath"
+                  href="#techCurvedLoopPath"
+                  startOffset="0"
+                >React ✦ Vue.js ✦ Next.js ✦ TypeScript ✦ JavaScript ✦ HTML5 ✦ CSS3 ✦ Tailwind CSS ✦ Bootstrap ✦ Node.js ✦ Express.js ✦ Python ✦ Django ✦ Laravel ✦ PHP ✦ MongoDB ✦ PostgreSQL ✦ MySQL ✦ Docker ✦ Git ✦ React ✦ Vue.js ✦ Next.js ✦ TypeScript ✦ JavaScript ✦ HTML5 ✦ CSS3 ✦ Tailwind CSS ✦ Bootstrap ✦ Node.js ✦ Express.js ✦ Python ✦ Django ✦ Laravel ✦ PHP ✦ MongoDB ✦ PostgreSQL ✦ MySQL ✦ Docker ✦ Git ✦ </textPath>
+              </text>
+            </svg>
+            <ul class="tech-curved-loop__fallback" aria-hidden="true">
+              <li>React</li>
+              <li>Vue.js</li>
+              <li>Next.js</li>
+              <li>TypeScript</li>
+              <li>JavaScript</li>
+              <li>HTML5</li>
+              <li>CSS3</li>
+              <li>Tailwind CSS</li>
+              <li>Bootstrap</li>
+              <li>Node.js</li>
+              <li>Express.js</li>
+              <li>Python</li>
+              <li>Django</li>
+              <li>Laravel</li>
+              <li>PHP</li>
+              <li>MongoDB</li>
+              <li>PostgreSQL</li>
+              <li>MySQL</li>
+              <li>Docker</li>
+              <li>Git</li>
+            </ul>
           </div>
         </div>
       </section>
@@ -1397,50 +1004,13 @@
                 />
               </svg>
             </a>
-            <a
-              href="https://linkedin.com/company/mrneon"
-              class="social-link"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="لینکدین"
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <path
-                  d="M16 8C17.5913 8 19.1174 8.63214 20.2426 9.75736C21.3679 10.8826 22 12.4087 22 14V21H18V14C18 13.4696 17.7893 12.9609 17.4142 12.5858C17.0391 12.2107 16.5304 12 16 12C15.4696 12 14.9609 12.2107 14.5858 12.5858C14.2107 12.9609 14 13.4696 14 14V21H10V14C10 12.4087 10.6321 10.8826 11.7574 9.75736C12.8826 8.63214 14.4087 8 16 8Z"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <path
-                  d="M6 9H2V21H6V9Z"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <path
-                  d="M4 6C5.10457 6 6 5.10457 6 4C6 2.89543 5.10457 2 4 2C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6Z"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </a>
           </div>
           <div class="footer-links">
             <a href="#hero" class="footer-link">خانه</a>
             <a href="#services" class="footer-link">خدمات</a>
             <a href="#portfolio" class="footer-link">نمونه‌کارها</a>
             <a href="#contact" class="footer-link">تماس با ما</a>
+            <button type="button" class="footer-link" id="adminAccessBtn" aria-haspopup="dialog">ورود مدیریت</button>
           </div>
           <div class="footer-copyright">
             <p>© <span id="currentYear">۱۴۰۳</span> - کلیه حقوق محفوظ است</p>
@@ -1626,17 +1196,8 @@
     <?php include_once 'components/auth-modals.html'; ?>
     <?php include_once 'components/neo-modal.html'; ?>
     <?php include_once 'components/admin-modal.html'; ?>
+    <?php include_once 'components/customer-workspace.html'; ?>
 
     <script src="js/app.js" type="module" defer></script>
-    <script>
-      (function () {
-        var yearElement = document.getElementById("currentYear");
-        if (yearElement) {
-          yearElement.textContent = new Date().toLocaleDateString("fa-IR", {
-            year: "numeric",
-          });
-        }
-      })();
-    </script>
   </body>
 </html>

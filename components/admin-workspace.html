@@ -1,0 +1,91 @@
+<!-- MR NEON: Authenticated admin workspace. All data is fetched through role-protected APIs. -->
+<div
+  class="admin-data-modal"
+  id="adminDataModal"
+  hidden
+  role="dialog"
+  aria-hidden="true"
+  aria-modal="true"
+  aria-labelledby="adminDataTitle"
+>
+  <div class="admin-modal-overlay" id="adminDataOverlay"></div>
+  <div class="admin-data-container">
+    <header class="admin-data-header">
+      <h1 id="adminDataTitle" tabindex="-1">فضای کاری مدیریت MR NEON</h1>
+      <div class="admin-data-header-actions">
+        <button id="adminLogoutBtn" class="btn btn-outline btn-sm" type="button" aria-label="خروج امن از حساب مدیریت">
+          خروج از حساب
+        </button>
+        <button
+          type="button"
+          class="admin-modal-close admin-return-site"
+          id="adminDataClose"
+          aria-label="بازگشت به سایت عمومی؛ نشست مدیریت حفظ می‌شود"
+        >بازگشت به سایت عمومی</button>
+      </div>
+    </header>
+    <div class="admin-dashboard-metrics" id="adminMetrics" aria-label="خلاصه وضعیت عملیاتی" aria-describedby="adminStatsStatus" aria-busy="false">
+      <div class="metric-card metric-users"><div class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20v-1.2a5.5 5.5 0 0 1 11 0V20M16 5.2a3.2 3.2 0 0 1 0 6.2M18 14a4.6 4.6 0 0 1 2.5 4.1V20"/></svg></div><div class="metric-value" id="metricTotalUsers">—</div><div class="metric-label">کل کاربران</div></div>
+      <div class="metric-card metric-pending"><div class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.3 2"/></svg></div><div class="metric-value" id="metricPending">—</div><div class="metric-label">در انتظار بررسی</div></div>
+      <div class="metric-card metric-progress"><div class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12h4l2.2-6 4.1 12 2.2-6H21"/></svg></div><div class="metric-value" id="metricInProgress">—</div><div class="metric-label">در حال انجام</div></div>
+      <div class="metric-card metric-completed"><div class="metric-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="m7.8 12.2 2.7 2.7 5.9-6"/></svg></div><div class="metric-value" id="metricCompleted">—</div><div class="metric-label">تکمیل‌شده</div></div>
+    </div>
+    <p class="admin-state" id="adminStatsStatus" role="status" aria-live="polite" aria-atomic="true" data-state="loading">آمار از سرور دریافت می‌شود.</p>
+    <button type="button" class="btn btn-outline btn-sm admin-stats-retry" id="adminStatsRetryBtn" hidden>تلاش دوباره برای دریافت آمار</button>
+    <div class="admin-workspace-tabs" role="tablist" aria-label="بخش‌های مدیریت">
+      <button id="adminProjectsTab" type="button" class="active" data-admin-tab="projects" role="tab" aria-selected="true" aria-controls="adminProjectsView" tabindex="0">مدیریت پروژه‌ها</button>
+      <button id="adminUsersTab" type="button" data-admin-tab="users" role="tab" aria-selected="false" aria-controls="adminUsersView" tabindex="-1">مدیریت کاربران</button>
+      <button id="adminNotificationsTab" type="button" data-admin-tab="notifications" role="tab" aria-selected="false" aria-controls="adminNotificationsView" tabindex="-1">صندوق اعلان‌ها <span id="adminNotificationsTabCount" class="admin-notification-count" hidden>0</span></button>
+    </div>
+    <section id="adminProjectsView" class="admin-workspace-view" role="tabpanel" aria-labelledby="adminProjectsTab" aria-hidden="false" tabindex="0">
+      <p class="admin-state" id="adminProjectsStatus" role="status" aria-live="polite" data-state="loading">در حال دریافت پروژه‌ها…</p>
+      <div class="admin-data-filters">
+        <label class="admin-filter-search"><span>جست‌وجوی پروژه</span><input type="search" id="adminSearchInput" class="form-input" placeholder="نام، کد پیگیری، تلفن یا ایمیل" autocomplete="off" /></label>
+        <label><span>وضعیت</span><select id="adminFilterStatus" class="form-input form-select">
+          <option value="all">همه وضعیت‌ها</option><option value="submitted">ثبت‌شده</option><option value="under_review">در حال بررسی</option><option value="needs_information">نیازمند اطلاعات</option><option value="in_progress">در حال انجام</option><option value="waiting_for_client">در انتظار مشتری</option><option value="completed">تکمیل‌شده</option><option value="rejected">ردشده</option><option value="cancelled">لغوشده</option>
+        </select></label>
+        <label><span>نوع پروژه</span><select id="adminFilterType" class="form-input form-select"><option value="all">همه نوع پروژه‌ها</option></select></label>
+        <label><span>مالک دقیق پروژه</span><input type="search" id="adminProjectOwnerFilter" class="form-input" placeholder="نام کاربری یا شناسه عمومی مشتری" autocomplete="off" maxlength="128" /></label>
+        <label><span>روز ثبت پروژه (UTC)</span><input type="date" id="adminProjectDateFilter" class="form-input" /></label>
+        <label><span>مرتب‌سازی پروژه‌ها</span><select id="adminProjectSort" class="form-input form-select"><option value="created_at">تاریخ ثبت</option><option value="updated_at">آخرین تغییر</option><option value="tracking_code">کد پیگیری</option><option value="status">وضعیت</option><option value="owner_name">نام مشتری</option><option value="progress">پیشرفت</option></select></label>
+        <label><span>ترتیب</span><select id="adminProjectSortDirection" class="form-input form-select"><option value="desc">نزولی</option><option value="asc">صعودی</option></select></label>
+        <button type="button" class="btn btn-outline" id="adminExportBtn" aria-describedby="adminExportStatus">خروجی CSV نتایج فیلترشده</button>
+        <span id="adminExportStatus" class="admin-visually-hidden" role="status" aria-live="polite" aria-atomic="true"></span>
+      </div>
+      <div class="admin-data-table-wrap" id="adminProjectsTableWrap" aria-busy="true">
+        <table class="admin-data-table" id="adminDataTable" aria-describedby="adminProjectsStatus">
+          <caption class="admin-visually-hidden">فهرست پروژه‌ها همراه با اطلاعات مشتری، وضعیت، پیشرفت، توضیحات و عملیات مجاز مدیریت</caption>
+          <thead><tr><th scope="col">کد پیگیری</th><th scope="col">مشتری</th><th scope="col">نوع پروژه</th><th scope="col">درخواست</th><th scope="col">وضعیت / پیشرفت</th><th scope="col">توضیح مشتری</th><th scope="col">یادداشت داخلی</th><th scope="col">عملیات</th></tr></thead>
+          <tbody id="adminDataTbody"><tr><td colspan="8" class="admin-state-cell">در حال بارگذاری…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="admin-data-pagination" id="adminPagination"></div>
+    </section>
+    <section id="adminUsersView" class="admin-workspace-view" role="tabpanel" aria-labelledby="adminUsersTab" aria-hidden="true" tabindex="0" hidden>
+      <p class="admin-state" id="adminUsersStatus" role="status" aria-live="polite" tabindex="-1" data-state="idle">برای مشاهده فهرست کاربران، داده از سرور دریافت می‌شود.</p>
+      <div class="admin-data-filters admin-user-filters">
+        <label class="admin-filter-search"><span>جست‌وجوی کاربر</span><input type="search" id="adminUserSearchInput" class="form-input" placeholder="نام، نام کاربری، تلفن یا ایمیل" autocomplete="off" /></label>
+        <label><span>وضعیت حساب</span><select id="adminUserFilterStatus" class="form-input form-select"><option value="all">همه حساب‌ها</option><option value="active">فعال</option><option value="suspended">تعلیق‌شده</option><option value="pending">در انتظار تأیید</option><option value="closed">بسته‌شده</option></select></label>
+        <label><span>روز ثبت حساب (UTC)</span><input type="date" id="adminUserDateFilter" class="form-input" /></label>
+        <label><span>مرتب‌سازی کاربران</span><select id="adminUserSort" class="form-input form-select"><option value="created_at">تاریخ ثبت</option><option value="last_activity">آخرین ورود</option><option value="name">نام</option><option value="username">نام کاربری</option><option value="account_status">وضعیت حساب</option><option value="project_count">تعداد پروژه</option></select></label>
+        <label><span>ترتیب</span><select id="adminUserSortDirection" class="form-input form-select"><option value="desc">نزولی</option><option value="asc">صعودی</option></select></label>
+      </div>
+      <div class="admin-data-table-wrap" id="adminUsersTableWrap" aria-busy="false"><table class="admin-data-table" id="adminUsersTable" aria-describedby="adminUsersStatus">
+        <caption class="admin-visually-hidden">فهرست کاربران، اطلاعات تماس، وضعیت حساب، تعداد پروژه‌ها و عملیات مجاز مدیریت</caption>
+        <thead><tr><th scope="col">کاربر</th><th scope="col">اطلاعات تماس</th><th scope="col">وضعیت حساب</th><th scope="col">پروژه‌ها</th><th scope="col">تاریخ / آخرین ورود</th><th scope="col">عملیات</th></tr></thead>
+        <tbody id="adminUsersTbody"><tr><td colspan="6" class="admin-state-cell">برای مشاهده به بخش کاربران بروید.</td></tr></tbody>
+      </table></div>
+      <div class="admin-data-pagination" id="adminUserPagination"></div>
+      <p class="admin-state" data-state="idle">تعلیق حساب، نشست‌های فعال کاربر را سمت سرور باطل می‌کند. حساب‌های در انتظار تأیید یا بسته‌شده از این رابط قابل فعال‌سازی نیستند.</p>
+    </section>
+    <section id="adminNotificationsView" class="admin-workspace-view" role="tabpanel" aria-labelledby="adminNotificationsTab" aria-hidden="true" tabindex="0" hidden>
+      <p class="admin-state" id="adminNotificationsStatus" role="status" aria-live="polite" aria-atomic="true" data-state="idle">برای مشاهدهٔ اعلان‌ها، اطلاعات از صندوق داخلی سرور دریافت می‌شود.</p>
+      <p class="admin-visually-hidden" id="adminNotificationsActionStatus" role="status" aria-live="polite" aria-atomic="true" data-state="idle"></p>
+      <div id="adminNotificationsList" class="admin-notification-list" aria-live="off" aria-busy="false"></div>
+      <div class="admin-notification-actions">
+        <button type="button" class="btn btn-outline" id="adminNotificationsRetryBtn" hidden>تلاش دوباره</button>
+        <button type="button" class="btn btn-outline" id="loadMoreAdminNotificationsBtn" hidden>نمایش اعلان‌های قدیمی‌تر</button>
+      </div>
+    </section>
+  </div>
+</div>

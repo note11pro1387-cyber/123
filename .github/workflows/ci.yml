@@ -1,0 +1,142 @@
+name: MR NEON baseline and database checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: Secret scan (working tree and Git history)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout complete history without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node 24 runtime)
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Download and verify pinned Gitleaks CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          workdir="$RUNNER_TEMP/gitleaks"
+          archive="gitleaks_8.30.1_linux_x64.tar.gz"
+          release_url="https://github.com/gitleaks/gitleaks/releases/download/v8.30.1"
+          mkdir -p "$workdir/bin"
+          curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 \
+            "$release_url/$archive" --output "$workdir/$archive"
+          curl --fail --location --silent --show-error --proto '=https' --tlsv1.2 \
+            "$release_url/gitleaks_8.30.1_checksums.txt" --output "$workdir/checksums.txt"
+          awk -v name="$archive" '$2 == name { print }' "$workdir/checksums.txt" > "$workdir/selected-checksum.txt"
+          test "$(wc -l < "$workdir/selected-checksum.txt")" -eq 1
+          (cd "$workdir" && sha256sum --check --strict selected-checksum.txt)
+          tar -xzf "$workdir/$archive" -C "$workdir/bin" gitleaks
+          chmod 0755 "$workdir/bin/gitleaks"
+          echo "$workdir/bin" >> "$GITHUB_PATH"
+          "$workdir/bin/gitleaks" version
+
+      - name: Scan current working tree (100% redacted)
+        run: gitleaks dir --redact=100 --exit-code 1 .
+
+      - name: Scan all available Git history (100% redacted)
+        run: gitleaks git --redact=100 --exit-code 1 .
+
+  static-and-unit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node 24 runtime)
+        with:
+          persist-credentials: false
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2.40.0; action.yml uses node24
+        with:
+          php-version: '8.4'
+          extensions: pdo_mysql
+          coverage: none
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0 (Node 24 runtime)
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do php -l "$file"; done < <(find . -type f -name '*.php' -not -path './vendor/*' -print0)
+      - name: JavaScript module syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do node --input-type=module --check < "$file"; done < <(find js -type f -name '*.js' -print0)
+      - name: Wave 1 static security contracts
+        run: python3 tools/wave1_static_checks.py .
+      - name: Wave 2 unit and migration contracts
+        run: php tests/Unit/run-unit.php
+      - name: Wave 3 auth/session/CSRF unit contracts
+        run: php tests/Unit/run-wave3-unit.php
+      - name: Wave 3 central API client behavior
+        run: node tests/Unit/run-api-client-tests.mjs
+      - name: Wave 3 static auth/API/consumer checks
+        run: python3 tools/wave3_static_checks.py .
+      - name: Wave 3 local HTTP smoke contracts
+        run: python3 tests/Integration/run-wave3-http-smoke.py
+
+  mariadb-integration:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: '1'
+          MARIADB_DATABASE: mrneon_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      MRNEON_DB_HOST: 127.0.0.1
+      MRNEON_DB_PORT: '3306'
+      MRNEON_DB_NAME: mrneon_test
+      MRNEON_DB_USER: root
+      MRNEON_DB_PASSWORD: ''
+      MRNEON_DB_ALLOW_EMPTY_PASSWORD: '1'
+      MRNEON_TEST_RESTORE_DB: mrneon_restore_test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node 24 runtime)
+        with:
+          persist-credentials: false
+      - name: Set up PHP with PDO MySQL
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2.40.0; action.yml uses node24
+        with:
+          php-version: '8.4'
+          extensions: pdo_mysql
+          coverage: none
+      - name: Wait for MariaDB health check
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            php -r '$p=new PDO("mysql:host=127.0.0.1;port=3306;dbname=mysql", "root", "", [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]); echo "MariaDB reachable\n";' && exit 0
+            sleep 2
+          done
+          echo 'MariaDB did not become ready.' >&2
+          exit 1
+      - name: MariaDB schema/repository/import-support/backup-restore integration
+        run: php tests/Integration/run-db-integration.php
+      - name: Wave 3 authentication/session/authorization/MFA integration
+        run: php tests/Integration/run-wave3-auth-db-integration.php

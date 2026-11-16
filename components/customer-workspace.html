@@ -1,0 +1,194 @@
+<!-- MR NEON: Customer workspace and project detail; server APIs enforce account ownership. -->
+<div
+  class="user-panel-modal"
+  id="userPanelModal"
+  hidden
+  aria-hidden="true"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="userPanelName"
+>
+  <div class="user-panel-backdrop"></div>
+  <div class="user-panel-container" tabindex="-1">
+    <button type="button" class="panel-close" aria-label="بستن پنل کاربری">&times;</button>
+    <div class="user-panel-header">
+      <div class="user-info">
+        <div class="user-avatar">👤</div>
+        <div>
+          <h2 id="userPanelName">نام کاربر</h2>
+          <p id="userPanelUsername">@username</p>
+        </div>
+      </div>
+      <button id="userLogoutBtn" class="btn btn-outline btn-sm">🚪 خروج</button>
+    </div>
+    <div class="user-panel-stats">
+      <div class="stat-box">
+        <div class="stat-number" id="activeProjectsCount">0</div>
+        <div class="stat-label">پروژه فعال</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" id="completedProjectsCount">0</div>
+        <div class="stat-label">تکمیل شده</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number">3</div>
+        <div class="stat-label">حداکثر مجاز</div>
+      </div>
+    </div>
+    <div class="user-panel-tabs" role="tablist" aria-label="بخش‌های پنل کاربری">
+      <button type="button" id="userProjectsTabButton" class="tab-btn active" data-tab="projects" role="tab" aria-selected="true" aria-controls="projectsTab" tabindex="0">
+        📋 پروژه‌های من
+      </button>
+      <button type="button" id="userSettingsTabButton" class="tab-btn" data-tab="settings" role="tab" aria-selected="false" aria-controls="settingsTab" tabindex="-1">⚙️ تنظیمات حساب</button>
+      <button type="button" id="userNotificationsTabButton" class="tab-btn" data-tab="notifications" role="tab" aria-selected="false" aria-controls="notificationsTab" tabindex="-1">
+        🔔 اعلان‌ها <span class="badge" id="notifBadge" hidden>0</span>
+      </button>
+    </div>
+    <div class="user-panel-content">
+      <div class="tab-content active" id="projectsTab" role="tabpanel" aria-labelledby="userProjectsTabButton" tabindex="0">
+        <p class="customer-state" id="userProjectsStatus" role="status" aria-live="polite" data-state="idle">برای مشاهده پروژه‌ها، اطلاعات حساب از سرور دریافت می‌شود.</p>
+        <div class="projects-list" id="userProjectsList"></div>
+        <div class="customer-project-list-actions">
+          <button type="button" class="btn btn-outline btn-block" id="userProjectsRetryBtn" hidden>تلاش دوباره</button>
+          <button type="button" class="btn btn-outline btn-block" id="loadMoreProjectsBtn" hidden>نمایش پروژه‌های بیشتر</button>
+        </div>
+        <button
+          class="btn btn-primary btn-block customer-new-project-action"
+          id="newProjectBtn"
+          aria-describedby="newProjectStatus"
+        >
+          ➕ ثبت پروژه جدید
+        </button>
+        <p class="customer-state" id="newProjectStatus" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+      </div>
+      <div class="tab-content" id="settingsTab" role="tabpanel" aria-labelledby="userSettingsTabButton" tabindex="0" hidden>
+        <section class="customer-account-summary" aria-labelledby="customerAccountHeading">
+          <h3 id="customerAccountHeading">اطلاعات حساب</h3>
+          <p>اطلاعات زیر از نشست معتبر سرور نمایش داده می‌شوند. ویرایش حساب تا آماده‌شدن endpoint امن مربوطه غیرفعال است.</p>
+          <div class="form-group">
+            <label for="userAccountFullName">نام و نام خانوادگی</label>
+            <input type="text" id="userAccountFullName" readonly autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="currentUsername">نام کاربری</label>
+            <input type="text" id="currentUsername" readonly autocomplete="username" />
+          </div>
+          <div class="form-group">
+            <label for="userAccountPhone">شماره تماس</label>
+            <input type="text" id="userAccountPhone" readonly autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="userAccountEmail">ایمیل</label>
+            <input type="email" id="userAccountEmail" readonly autocomplete="off" />
+          </div>
+        </section>
+      </div>
+      <div class="tab-content" id="notificationsTab" role="tabpanel" aria-labelledby="userNotificationsTabButton" tabindex="0" hidden>
+        <p class="customer-state customer-notifications-status" id="userNotificationsStatus" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+        <p class="customer-state customer-notifications-status" id="userNotificationActionStatus" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+        <div class="notifications-list" id="userNotificationsList" aria-live="polite" aria-busy="false" aria-describedby="userNotificationsStatus userNotificationActionStatus"></div>
+        <button type="button" class="btn btn-outline btn-block" id="userNotificationsRetryBtn" aria-controls="userNotificationsList" aria-describedby="userNotificationsStatus" hidden>تلاش دوباره</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="customer-project-detail-modal" id="customerProjectDetailModal" hidden>
+  <div class="customer-project-detail-backdrop" data-detail-backdrop></div>
+  <section class="customer-project-detail-shell" role="dialog" aria-modal="true" aria-labelledby="customerProjectDetailTitle" tabindex="-1">
+    <header class="customer-project-detail-header">
+      <div>
+        <p class="customer-detail-eyebrow">پیگیری درخواست</p>
+        <h2 id="customerProjectDetailTitle">جزئیات پروژه</h2>
+      </div>
+      <button type="button" class="customer-project-detail-close" id="customerProjectDetailClose" data-detail-close aria-label="بستن جزئیات پروژه">×</button>
+    </header>
+    <p class="customer-state" id="customerProjectDetailStatus" role="status" aria-live="polite" aria-atomic="true" data-state="loading">در حال دریافت اطلاعات از سرور…</p>
+    <div id="customerProjectDetailSkeleton" class="customer-project-detail-skeleton" aria-hidden="true" hidden>
+      <section class="customer-detail-section">
+        <div class="customer-detail-skeleton__summary-head">
+          <div class="customer-detail-skeleton__stack">
+            <span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--eyebrow"></span>
+            <span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--title"></span>
+          </div>
+          <span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--badge"></span>
+        </div>
+        <div class="customer-detail-skeleton__code">
+          <span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--label"></span>
+          <span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--code"></span>
+          <span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--copy"></span>
+        </div>
+        <div class="customer-detail-skeleton__facts">
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--fact-label"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--fact-value"></span></div>
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--fact-label"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--fact-value customer-detail-skeleton__bar--fact-value-short"></span></div>
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--fact-label"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--fact-value"></span></div>
+        </div>
+      </section>
+      <section class="customer-detail-section">
+        <span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--section-title"></span>
+        <div class="customer-detail-skeleton__fields">
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--field-label"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--field-value"></span></div>
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--field-label"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--field-value customer-detail-skeleton__bar--field-value-short"></span></div>
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--field-label"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--field-value"></span></div>
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--field-label"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--field-value customer-detail-skeleton__bar--field-value-medium"></span></div>
+        </div>
+      </section>
+      <section class="customer-detail-section">
+        <span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--section-title"></span>
+        <div class="customer-detail-skeleton__milestones">
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--dot"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--milestone"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--percent"></span></div>
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--dot"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--milestone customer-detail-skeleton__bar--milestone-short"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--percent"></span></div>
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--dot"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--milestone"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--percent"></span></div>
+        </div>
+      </section>
+      <section class="customer-detail-section">
+        <span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--section-title"></span>
+        <div class="customer-detail-skeleton__history">
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--dot"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--history-wide"></span></div>
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--dot"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--history-medium"></span></div>
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--dot"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--history-short"></span></div>
+        </div>
+      </section>
+      <section class="customer-detail-section">
+        <span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--section-title"></span>
+        <div class="customer-detail-skeleton__messages">
+          <div><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--message-wide"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--message-meta"></span></div>
+          <div class="customer-detail-skeleton__message-own"><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--message-medium"></span><span class="customer-detail-skeleton__bar customer-detail-skeleton__bar--message-meta"></span></div>
+        </div>
+      </section>
+    </div>
+    <button type="button" class="btn btn-outline btn-sm" id="customerProjectDetailRetryBtn" hidden>تلاش دوباره</button>
+    <div id="customerProjectDetailContent" class="customer-project-detail-content" aria-busy="false" hidden>
+      <section class="customer-detail-section" aria-label="خلاصه پروژه">
+        <div id="customerProjectDetailSummary"></div>
+      </section>
+      <section class="customer-detail-section">
+        <h3>شرح درخواست</h3>
+        <dl class="customer-project-brief" id="customerProjectBrief"></dl>
+      </section>
+      <section class="customer-detail-section">
+        <h3>مراحل پروژه</h3>
+        <ul class="customer-milestone-list" id="customerProjectMilestones"></ul>
+      </section>
+      <section class="customer-detail-section">
+        <h3>تاریخچه قابل مشاهده</h3>
+        <ol class="customer-project-timeline" id="customerProjectTimeline" aria-busy="false"></ol>
+        <p class="customer-state customer-history-state" id="customerProjectTimelineStatus" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+        <button type="button" class="btn btn-outline btn-sm customer-history-more" id="customerProjectTimelineMoreBtn" hidden>نمایش رویدادهای قدیمی‌تر</button>
+      </section>
+      <section class="customer-detail-section">
+        <h3>پیام‌های پروژه</h3>
+        <div class="customer-project-messages" id="customerProjectMessages" aria-busy="false"></div>
+        <p class="customer-state customer-history-state" id="customerProjectMessagesStatus" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+        <button type="button" class="btn btn-outline btn-sm customer-history-more" id="customerProjectMessagesMoreBtn" hidden>نمایش پیام‌های قدیمی‌تر</button>
+        <form class="customer-project-message-form" id="customerProjectMessageForm">
+          <label for="customerProjectMessageInput">پیام جدید برای تیم MR NEON</label>
+          <textarea id="customerProjectMessageInput" name="text" rows="3" maxlength="2000" required placeholder="پیام خود را بنویسید…"></textarea>
+          <p class="customer-state" id="customerProjectMessageStatus" role="status" aria-live="polite"></p>
+          <button type="submit" class="btn btn-primary" id="customerProjectMessageSubmit">ارسال پیام</button>
+        </form>
+      </section>
+    </div>
+  </section>
+</div>

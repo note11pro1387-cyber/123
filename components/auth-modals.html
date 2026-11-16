@@ -47,8 +47,8 @@
       </div>
       <div class="checkbox-group">
         <label class="checkbox-label">
-          <input type="checkbox" id="rememberMe" />
-          <span>مرا به خاطر بسپار</span>
+          <input type="checkbox" id="rememberMe" disabled aria-describedby="rememberMeHelp" />
+          <span>مرا به خاطر بسپار (فعلاً غیرفعال)</span>
         </label>
       </div>
       <button type="submit" class="btn btn-primary btn-block">
@@ -106,53 +106,55 @@
       </div>
       <div class="form-group">
         <label for="regPhone">شماره تلفن <span class="required">*</span></label>
-        <div class="input-with-prefix">
-          <span class="input-prefix">+98</span>
-          <input
-            type="tel"
-            id="regPhone"
-            name="phone"
-            placeholder="9123456789"
-            required
-            pattern="09[0-9]{9}"
-            maxlength="11"
-          />
-        </div>
+        <input
+          type="tel"
+          id="regPhone"
+          name="phone"
+          placeholder="09123456789 یا +989123456789"
+          required
+          pattern="[0-9۰-۹٠-٩ +().-]{7,32}"
+          maxlength="32"
+          autocomplete="tel"
+        />
         <span class="validation-message"></span>
-        <span class="input-hint">مثال: 09123456789</span>
+        <span class="input-hint">شمارهٔ ایران پذیرفته می‌شود؛ سرور آن را به قالب استاندارد +989... تبدیل می‌کند.</span>
       </div>
       <div class="form-group">
         <label for="regEmail"
-          >ایمیل <span class="optional-badge">اختیاری</span></label
+          >ایمیل <span class="optional-badge" id="regEmailRequirement">اختیاری</span></label
         >
         <input
           type="email"
           id="regEmail"
           name="email"
           placeholder="example@email.com"
+          autocomplete="email"
+          aria-required="false"
+          aria-describedby="regEmailRequirement regEmailHint"
         />
         <span class="validation-message"></span>
-        <span class="input-hint"
-          >برای بازیابی رمز عبور در صورت فراموشی (توصیه می‌شود)</span
-        >
+        <span class="input-hint" id="regEmailHint">
+          با انتخاب Email اجباری می‌شود؛ در Telegram می‌تواند خالی بماند. واردکردن ایمیل به‌تنهایی به معنی تأیید آن نیست.
+        </span>
       </div>
-      <div class="form-group">
-        <label for="regTelegram"
-          >آیدی تلگرام <span class="optional-badge">اختیاری</span></label
-        >
-        <div class="input-with-prefix">
-          <span class="input-prefix">@</span>
-          <input
-            type="text"
-            id="regTelegram"
-            name="telegramId"
-            placeholder="username"
-          />
+      <div class="form-group" id="regVerificationChannelGroup">
+        <label>کانال تأیید حساب <span class="required">*</span></label>
+        <div class="verification-channel-options">
+          <label class="verification-channel-option">
+            <input type="radio" name="registrationChannel" value="telegram" required />
+            Telegram
+          </label>
+          <label class="verification-channel-option">
+            <input type="radio" name="registrationChannel" value="email" required />
+            Email
+          </label>
+          <label class="verification-channel-option verification-channel-option--disabled">
+            <input type="radio" name="registrationChannelDisabled" value="sms" disabled />
+            SMS (به‌زودی)
+          </label>
         </div>
         <span class="validation-message"></span>
-        <span class="input-hint"
-          >برای دریافت کد تایید و بازیابی رمز عبور (توصیه می‌شود)</span
-        >
+        <span class="input-hint">دقیقاً یک کانال فعال انتخاب کنید. در این مرحله هنوز کدی ارسال نمی‌شود.</span>
       </div>
       <div class="form-group">
         <label for="regUsername"
@@ -182,9 +184,10 @@
             type="password"
             id="regPassword"
             name="password"
-            placeholder="حداقل ۸ کاراکتر"
+            placeholder="حداقل ۱۵ نویسهٔ Unicode"
+            autocomplete="new-password"
             required
-            minlength="8"
+            aria-describedby="regPasswordPolicyHint"
           />
           <button
             type="button"
@@ -205,25 +208,27 @@
             </svg>
           </button>
         </div>
+        <span class="validation-message" aria-live="polite"></span>
         <div class="password-strength-meter">
           <div class="strength-bar"></div>
         </div>
-        <div class="password-requirements">
+        <div class="password-requirements" aria-label="شرایط اعتبار رمز عبور">
           <div class="requirement" data-check="length">
-            <span class="check-icon">✗</span><span>حداقل ۸ کاراکتر</span>
+            <span class="check-icon">✗</span><span>حداقل ۱۵ نویسهٔ Unicode</span>
           </div>
-          <div class="requirement" data-check="uppercase">
-            <span class="check-icon">✗</span
-            ><span>حداقل یک حرف بزرگ (A-Z)</span>
+          <div class="requirement" data-check="byteLimit">
+            <span class="check-icon">✗</span><span>حداکثر ۱۰۲۴ بایت UTF-8</span>
           </div>
-          <div class="requirement" data-check="lowercase">
-            <span class="check-icon">✗</span
-            ><span>حداقل یک حرف کوچک (a-z)</span>
+          <div class="requirement" data-check="unicode">
+            <span class="check-icon">✗</span><span>رشتهٔ Unicode معتبر</span>
           </div>
-          <div class="requirement" data-check="number">
-            <span class="check-icon">✗</span><span>حداقل یک عدد (0-9)</span>
+          <div class="requirement" data-check="noControls">
+            <span class="check-icon">✗</span><span>بدون نویسه‌های کنترلی ASCII</span>
           </div>
         </div>
+        <span class="input-hint" id="regPasswordPolicyHint" aria-live="polite">
+          طول بر پایهٔ نویسه‌های Unicode و سقف بر پایهٔ بایت UTF-8 سنجیده می‌شود. فاصله‌های ابتدا و انتهای رمز حذف نمی‌شوند.
+        </span>
       </div>
       <div class="form-group">
         <label for="regPasswordConfirm"
@@ -258,179 +263,6 @@
         </div>
       </button>
     </form>
-    <div id="registerModal" class="register-modal" hidden>
-      <div class="register-backdrop"></div>
-      <div class="register-container">
-        <button class="register-close" aria-label="بستن">×</button>
-        <div class="register-header">
-          <h2>📝 ایجاد حساب کاربری</h2>
-          <p class="register-subtitle">اطلاعات خود را وارد کنید</p>
-        </div>
-        <form id="registerForm" class="register-form" autocomplete="off">
-          <div class="form-group">
-            <label for="regFullName"
-              >نام و نام خانوادگی <span class="required">*</span></label
-            >
-            <input
-              type="text"
-              id="regFullName"
-              name="fullName"
-              class="form-input"
-              placeholder="مثال: علی رضایی"
-              required
-            />
-            <span class="validation-message"></span>
-          </div>
-          <div class="form-group">
-            <label for="regPhone"
-              >شماره تلفن <span class="required">*</span></label
-            >
-            <div class="input-with-prefix">
-              <span class="input-prefix">+98</span>
-              <input
-                type="tel"
-                id="regPhone"
-                name="phone"
-                class="form-input"
-                placeholder="مثال: 09123456789"
-                required
-              />
-            </div>
-            <span class="validation-message"></span>
-          </div>
-          <div class="form-group">
-            <label for="regEmail"
-              >ایمیل <span class="optional-badge">اختیاری</span></label
-            >
-            <input
-              type="email"
-              id="regEmail"
-              name="email"
-              class="form-input"
-              placeholder="برای بازیابی رمز عبور"
-            />
-            <span class="input-hint"
-              >برای بازیابی رمز عبور در صورت فراموشی (توصیه می‌شود)</span
-            >
-            <span class="validation-message"></span>
-          </div>
-          <div class="form-group">
-            <label for="regTelegram"
-              >آیدی تلگرام <span class="required">*</span></label
-            >
-            <div class="input-with-prefix">
-              <span class="input-prefix">@</span>
-              <input
-                type="text"
-                id="regTelegram"
-                name="telegramId"
-                class="form-input"
-                placeholder="username"
-                required
-              />
-            </div>
-            <span class="input-hint"
-              >برای دریافت کد تایید و بازیابی رمز عبور (الزامی)</span
-            >
-            <span class="validation-message"></span>
-          </div>
-          <div class="form-group">
-            <label for="regUsername"
-              >نام کاربری <span class="required">*</span></label
-            >
-            <input
-              type="text"
-              id="regUsername"
-              name="username"
-              class="form-input"
-              placeholder="مثال: ali_rezaei"
-              required
-            />
-            <span class="input-hint"
-              >۴-۲۰ کاراکتر، فقط حروف انگلیسی، اعداد و زیرخط (_) مجاز است</span
-            >
-            <span class="validation-message"></span>
-          </div>
-          <div class="form-group">
-            <label for="regPassword"
-              >رمز عبور <span class="required">*</span></label
-            >
-            <div class="input-wrapper">
-              <input
-                type="password"
-                id="regPassword"
-                name="password"
-                class="form-input"
-                placeholder="رمز عبور قوی"
-                required
-              />
-              <button
-                type="button"
-                class="password-toggle"
-                aria-label="نمایش رمز"
-              >
-                👁️
-              </button>
-            </div>
-            <div class="password-strength-meter">
-              <div class="strength-bar"></div>
-            </div>
-            <div class="password-requirements">
-              <div class="requirement" data-check="length">
-                <span class="check-icon">✗</span> حداقل ۸ کاراکتر
-              </div>
-              <div class="requirement" data-check="uppercase">
-                <span class="check-icon">✗</span> حداقل یک حرف بزرگ (A-Z)
-              </div>
-              <div class="requirement" data-check="lowercase">
-                <span class="check-icon">✗</span> حداقل یک حرف کوچک (a-z)
-              </div>
-              <div class="requirement" data-check="number">
-                <span class="check-icon">✗</span> حداقل یک عدد (0-9)
-              </div>
-            </div>
-            <span class="validation-message"></span>
-          </div>
-          <div class="form-group">
-            <label for="regPasswordConfirm"
-              >تکرار رمز عبور <span class="required">*</span></label
-            >
-            <input
-              type="password"
-              id="regPasswordConfirm"
-              name="passwordConfirm"
-              class="form-input"
-              placeholder="تکرار رمز عبور"
-              required
-            />
-            <span class="validation-message"></span>
-          </div>
-          <div class="checkbox-group">
-            <label class="checkbox-label">
-              <input type="checkbox" id="agreeTerms" required />
-              <span
-                >با <a href="#" id="termsLink">قوانین و مقررات</a> سایت
-                موافقم</span
-              >
-            </label>
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">
-            <span class="btn-text">ایجاد حساب کاربری</span>
-            <span class="btn-loader" hidden
-              ><span class="loader-spinner"></span
-            ></span>
-          </button>
-        </form>
-        <div class="register-footer">
-          <p>
-            قبلاً ثبت‌نام کرده‌اید؟
-            <button type="button" id="switchToLoginBtn" class="btn-link">
-              ورود به حساب
-            </button>
-          </p>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -481,110 +313,79 @@
   </div>
 </div>
 
-<div id="forgotPasswordModal" class="auth-modal" hidden>
+<div id="forgotPasswordModal" class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="forgotPasswordTitle" aria-hidden="true" hidden>
   <div class="auth-backdrop"></div>
   <div class="auth-container">
-    <button class="forgot-password-close auth-close" aria-label="بستن">
-      ×
-    </button>
+    <button class="forgot-password-close auth-close" aria-label="بستن">×</button>
     <div class="auth-header">
-      <h2>🔑 بازیابی رمز عبور</h2>
-      <p class="auth-subtitle">از طریق تلگرام کد بازیابی دریافت کنید</p>
+      <h2 id="forgotPasswordTitle">🔑 بازیابی رمز عبور</h2>
+      <p class="auth-subtitle">با کانال تأییدشدهٔ متصل به حساب خود، رمز عبور را بازنشانی کنید.</p>
     </div>
-    <form id="forgotPasswordForm" class="auth-form" autocomplete="off">
-      <!-- مرحله ۱: درخواست کد -->
-      <div id="fpRequestSection">
+    <form id="forgotPasswordForm" class="auth-form" autocomplete="off" novalidate>
+      <!-- Stage 1: account identifier + verified destination choice. -->
+      <div id="fpRequestSection" aria-hidden="false">
         <div class="form-group">
           <label for="fpMethod">روش بازیابی</label>
           <select id="fpMethod" name="method" class="form-select">
-            <option value="telegram">💬 تلگرام (توصیه می‌شود)</option>
-            <option value="email">📧 ایمیل (به‌زودی)</option>
+            <option value="telegram">💬 تلگرام</option>
+            <option value="email">📧 ایمیل</option>
           </select>
         </div>
         <div class="form-group">
-          <label for="fpIdentifier">آیدی تلگرام</label>
-          <div class="input-with-prefix">
-            <span class="input-prefix">@</span>
-            <input
-              type="text"
-              id="fpIdentifier"
-              name="identifier"
-              class="form-input"
-              placeholder="username"
-              required
-            />
-          </div>
-          <span class="input-hint">آیدی تلگرامی که با آن ثبت‌نام کرده‌اید</span>
+          <label for="fpIdentifier" id="fpIdentifierLabel">نام کاربری MR NEON</label>
+          <input
+            type="text"
+            id="fpIdentifier"
+            name="identifier"
+            class="form-input"
+            placeholder="نام کاربری حساب MR NEON"
+            autocomplete="username"
+            maxlength="254"
+            required
+          />
+          <span class="input-hint" id="fpIdentifierHint">نام کاربری حساب MR NEON را وارد کنید؛ مقصد تلگرام از کانال تأییدشدهٔ سمت سرور تعیین می‌شود.</span>
         </div>
+        <p id="fpGenericInfo" class="input-hint" role="status" aria-live="polite" aria-atomic="true"></p>
       </div>
 
-      <!-- مرحله ۲: وارد کردن کد -->
-      <div id="fpCodeSection" style="display: none">
-        <div style="text-align: center; padding: 20px 0">
-          <div style="font-size: 48px; margin-bottom: 12px">📨</div>
-          <p
-            id="fpCodeInfo"
-            style="color: rgba(255, 255, 255, 0.8); margin-bottom: 16px"
-          >
-            کد بازیابی ارسال شد
+      <!-- Stage 2: OTP only. Reset password is deliberately a separate request with reset-only authorization. -->
+      <div id="fpCodeSection" aria-hidden="true" hidden>
+        <div class="recovery-code-intro">
+          <div class="recovery-code-icon" aria-hidden="true">📨</div>
+          <p id="fpCodeInfo" class="recovery-code-info" role="status" aria-live="polite">
+            اگر اطلاعات با حسابی مطابقت داشته باشد، کد تأیید ارسال می‌شود.
           </p>
         </div>
         <div class="form-group">
           <label for="fpCode">کد ۶ رقمی</label>
-          <input
-            type="text"
-            id="fpCode"
-            name="code"
-            class="form-input"
-            placeholder="۱۲۳۴۵۶"
-            maxlength="6"
-            style="
-              text-align: center;
-              letter-spacing: 8px;
-              font-size: 24px;
-              font-family: monospace;
-            "
-          />
-        </div>
-        <div class="form-group">
-          <label for="fpNewPassword">رمز عبور جدید</label>
-          <input
-            type="password"
-            id="fpNewPassword"
-            name="newPassword"
-            class="form-input"
-            placeholder="حداقل ۸ کاراکتر شامل حروف و عدد"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="fpConfirmPassword">تکرار رمز عبور جدید</label>
-          <input
-            type="password"
-            id="fpConfirmPassword"
-            name="confirmPassword"
-            class="form-input"
-            placeholder="تکرار رمز عبور جدید"
-            required
-          />
+          <input type="text" id="fpCode" name="code" class="form-input recovery-code-input" placeholder="123456" dir="ltr" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" aria-describedby="fpCodeInfo fpStatus" />
+        <button type="button" id="fpRestartFromCodeBtn" class="btn-link" data-fp-flow-control>تغییر روش یا شناسهٔ بازیابی</button>
         </div>
       </div>
 
-      <button
-        type="submit"
-        class="btn btn-primary btn-block"
-        style="margin-top: 20px"
-      >
-        <span class="btn-text">📤 ارسال کد بازیابی</span>
-        <span class="btn-loader" hidden
-          ><span class="loader-spinner"></span
-        ></span>
+      <!-- Stage 3: Reset-only token is held in JS memory and sent only in a request header. -->
+      <div id="fpResetSection" aria-hidden="true" hidden>
+        <p class="input-hint" role="status">کد تأیید شده است. رمز جدید را انتخاب کنید؛ این مرحله ورود به حساب ایجاد نمی‌کند.</p>
+        <div class="form-group">
+          <label for="fpNewPassword">رمز عبور جدید</label>
+          <input type="password" id="fpNewPassword" name="newPassword" class="form-input" placeholder="رمز عبور جدید" autocomplete="new-password" aria-describedby="fpPasswordPolicyHint fpStatus" />
+          <span class="input-hint" id="fpPasswordPolicyHint">حداقل ۱۵ کاراکتر Unicode؛ طول نهایی و الگوریتم رمزنگاری طبق سیاست امنیتی سرور بررسی می‌شود.</span>
+        </div>
+        <div class="form-group">
+          <label for="fpConfirmPassword">تکرار رمز عبور جدید</label>
+          <input type="password" id="fpConfirmPassword" name="confirmPassword" class="form-input" placeholder="تکرار رمز عبور جدید" autocomplete="new-password" aria-describedby="fpPasswordPolicyHint fpStatus" />
+          <button type="button" id="fpRestartFromResetBtn" class="btn-link" data-fp-flow-control>شروع دوبارهٔ بازیابی</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block recovery-submit-button">
+        <span class="btn-text">📤 ادامهٔ بازیابی</span>
+        <span class="btn-loader" hidden><span class="loader-spinner"></span></span>
       </button>
+      <p id="fpStatus" class="input-hint" role="status" aria-live="polite" aria-atomic="true"></p>
     </form>
-    <div class="auth-actions" style="padding: 0 40px 30px">
-      <button type="button" id="fpBackToLoginBtn" class="btn-link">
-        ↩️ بازگشت به صفحه ورود
-      </button>
+    <div class="auth-actions auth-actions--recovery">
+      <button type="button" id="fpBackToLoginBtn" class="btn-link">↩️ بازگشت به صفحه ورود</button>
     </div>
   </div>
 </div>

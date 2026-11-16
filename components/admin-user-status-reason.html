@@ -1,0 +1,23 @@
+<div class="admin-user-status-modal" id="adminUserStatusReasonModal" hidden aria-hidden="true">
+  <div class="admin-user-status-backdrop" id="adminUserStatusReasonBackdrop" aria-hidden="true"></div>
+  <section class="admin-user-status-dialog" role="dialog" aria-modal="true" aria-labelledby="adminUserStatusReasonTitle" aria-describedby="adminUserStatusReasonImpact" tabindex="-1">
+    <header class="admin-user-status-dialog-header">
+      <div>
+        <p class="admin-eyebrow">کنترل حساب کاربر</p>
+        <h2 id="adminUserStatusReasonTitle">تغییر وضعیت حساب</h2>
+      </div>
+      <button type="button" class="admin-user-status-dialog-close" id="adminUserStatusReasonClose" aria-label="بستن پنجره دلیل">×</button>
+    </header>
+    <p id="adminUserStatusReasonImpact" class="admin-user-status-impact"></p>
+    <form id="adminUserStatusReasonForm" novalidate>
+      <label for="adminUserStatusReasonInput">دلیل تصمیم مدیریتی <span aria-hidden="true">*</span></label>
+      <textarea id="adminUserStatusReasonInput" name="reason" rows="4" maxlength="500" required aria-describedby="adminUserStatusReasonHelp adminUserStatusReasonStatus" placeholder="دلیل روشن و قابل‌پیگیری را بنویسید؛ حداکثر ۵۰۰ نویسه."></textarea>
+      <p id="adminUserStatusReasonHelp" class="admin-user-status-help">این دلیل در سابقهٔ مدیریتی ثبت می‌شود. از درج رمز، کد تأیید یا اطلاعات حساس غیرضروری خودداری کنید.</p>
+      <p id="adminUserStatusReasonStatus" class="admin-user-status-feedback" role="status" aria-live="polite" data-state="idle"></p>
+      <div class="admin-user-status-dialog-actions">
+        <button type="button" class="btn btn-outline" id="adminUserStatusReasonCancel">انصراف</button>
+        <button type="submit" class="btn btn-primary" id="adminUserStatusReasonSubmit">تأیید تغییر وضعیت</button>
+      </div>
+    </form>
+  </section>
+</div>

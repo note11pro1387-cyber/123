@@ -1,0 +1,14 @@
+# Static fallback used when Apache mod_rewrite is unavailable.
+# The dynamic robots.php endpoint adds Sitemap only from a valid
+# MRNEON_PUBLIC_BASE_URL; never insert a guessed host here.
+User-agent: *
+Allow: /
+Disallow: /api.php
+Disallow: /bin/
+Disallow: /core/
+Disallow: /data/
+Disallow: /database/
+Disallow: /docs/
+Disallow: /reports/
+Disallow: /tests/
+Disallow: /tools/

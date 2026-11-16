@@ -1,0 +1,95 @@
+/* Tech stack curved marquee — isolated styles; global.css remains untouched. */
+.tech-curved-loop {
+  position: relative;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 0 40px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tech-curved-loop__svg {
+  /*
+   * Keep the SVG rendered (but invisible) until JavaScript measures the
+   * textPath. display:none makes getComputedTextLength() return zero in
+   * Chromium and prevents the `is-animated` class from ever being added.
+   */
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 10 / 3;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.tech-curved-loop__fallback {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  direction: ltr;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tech-curved-loop__fallback li {
+  max-width: 100%;
+  padding: 7px 11px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 999px;
+  background: var(--bg-card, #fff);
+  color: var(--text-secondary, #475569);
+  font-family: var(--font-latin, system-ui, sans-serif);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.5;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.tech-curved-loop.is-animated {
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.tech-curved-loop.is-animated:active {
+  cursor: grabbing;
+}
+
+.tech-curved-loop.is-animated:focus-visible {
+  border-radius: var(--radius-md, 12px);
+  outline: 2px solid var(--primary-teal, #0d9488);
+  outline-offset: 4px;
+}
+
+.tech-curved-loop.is-animated .tech-curved-loop__svg {
+  position: relative;
+  inset: auto;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.tech-curved-loop.is-animated .tech-curved-loop__fallback {
+  display: none;
+}
+
+.tech-curved-loop__text {
+  font-family:
+    var(--font-latin, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-size: 54px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  direction: ltr;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tech-curved-loop.is-animated {
+    cursor: default;
+    touch-action: auto;
+  }
+}

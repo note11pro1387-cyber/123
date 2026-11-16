@@ -11,6 +11,7 @@
   id="neoChatBubble"
   aria-label="دستیار هوشمند نیو"
   aria-expanded="false"
+  aria-controls="neoChatModal"
 >
   <span class="bubble-content">
     <span class="bubble-avatar">🤖</span>
@@ -25,6 +26,8 @@
   role="dialog"
   aria-modal="true"
   aria-labelledby="neoChatTitle"
+  aria-describedby="neoStepSubtitle"
+  tabindex="-1"
 >
   <div class="chat-modal-backdrop" id="neoChatBackdrop"></div>
   <div class="chat-modal-container">
@@ -40,8 +43,16 @@
         </div>
       </div>
       <div class="chat-header-actions">
-        <div class="progress-ring">
-          <svg viewBox="0 0 36 36">
+        <div
+          class="progress-ring"
+          role="progressbar"
+          aria-label="پیشرفت تکمیل فرم پروژه"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+          aria-valuetext="مرحله ۰ از ۸؛ تکمیل ۰ درصد"
+        >
+          <svg viewBox="0 0 36 36" aria-hidden="true" focusable="false">
             <circle
               class="progress-bg"
               cx="18"
@@ -64,7 +75,7 @@
               stroke-dasharray="0,100"
             />
           </svg>
-          <span class="progress-text" id="neoProgressText">0%</span>
+          <span class="progress-text" id="neoProgressText" aria-hidden="true">0%</span>
         </div>
         <button
           type="button"
@@ -88,7 +99,7 @@
     </header>
     <main class="chat-modal-body" id="neoChatBody"></main>
     <footer class="chat-modal-footer">
-      <div class="step-indicator" id="neoStepInfo">مرحله ۰ از ۱۰</div>
+      <div class="step-indicator" id="neoStepInfo" role="status" aria-live="polite" aria-atomic="true">مرحله <span>۰</span> از ۸</div>
       <div class="footer-actions">
         <button
           type="button"
@@ -128,11 +139,11 @@
   </div>
 </div>
 
-<svg class="neo-svg-defs" style="position: absolute; width: 0; height: 0">
+<svg class="neo-svg-defs">
   <defs>
     <linearGradient id="neoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color: #0d9488" />
-      <stop offset="100%" style="stop-color: #06b6d4" />
+      <stop offset="0%" stop-color="#0d9488" />
+      <stop offset="100%" stop-color="#06b6d4" />
     </linearGradient>
   </defs>
 </svg>
@@ -143,13 +154,16 @@
   role="dialog"
   aria-modal="true"
   aria-labelledby="thankYouTitle"
+  aria-describedby="thankYouDescription"
+  aria-hidden="true"
+  tabindex="-1"
   hidden
 >
   <div class="thank-you-backdrop"></div>
   <div class="thank-you-container">
     <div class="thank-you-icon">🎉</div>
     <h2 id="thankYouTitle">سپاسگزاریم از شما!</h2>
-    <p class="thank-you-text">
+    <p class="thank-you-text" id="thankYouDescription">
       درخواست شما با موفقیت ثبت شد.<br />
       برای مشاهدهٔ وضعیت و جزئیات درخواست خود می‌توانید به پنل کاربری مراجعه
       کنید.
@@ -157,13 +171,13 @@
     <div class="tracking-code-box">
       <div class="tracking-label">کد پیگیری:</div>
       <div class="tracking-value" id="thankYouTrackingCode"></div>
-      <button class="copy-tracking-btn" id="thankYouCopyBtn">📋 کپی کد</button>
+      <button type="button" class="copy-tracking-btn" id="thankYouCopyBtn">📋 کپی کد</button>
     </div>
     <div class="thank-you-actions">
-      <button class="btn btn-primary btn-block" id="goToPanelBtn">
+      <button type="button" class="btn btn-primary btn-block" id="goToPanelBtn">
         🏠 رفتن به پنل کاربری
       </button>
-      <button class="btn btn-outline btn-block" id="viewReceiptBtn">
+      <button type="button" class="btn btn-outline btn-block" id="viewReceiptBtn">
         📄 مشاهده رسید
       </button>
     </div>
@@ -173,9 +187,12 @@
 <div
   class="receipt-modal"
   id="receiptModal"
+  hidden
+  aria-hidden="true"
   role="dialog"
   aria-modal="true"
   aria-labelledby="receiptTitle"
+  tabindex="-1"
 >
   <div class="receipt-overlay" id="receiptOverlay"></div>
   <div class="receipt-container" id="receiptContainer">
@@ -203,6 +220,14 @@
     </div>
     <div class="receipt-body" id="receiptBody"></div>
     <div class="receipt-footer">
+      <p
+        class="receipt-action-status"
+        id="receiptActionStatus"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        data-state="idle"
+      ></p>
       <button type="button" class="btn btn-outline btn-sm" id="receiptCopyBtn">
         📋 کپی کد پیگیری
       </button>

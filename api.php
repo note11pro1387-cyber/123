@@ -11,7 +11,11 @@
  */
 
 // ====================== 1. CONFIGURATION ======================
+// Keep PHP warnings/notices out of JSON responses; diagnostics remain in the server error log.
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/app/bootstrap.php';
 
 // ====================== 2. SECURITY HEADERS ======================
 header('Content-Type: application/json; charset=utf-8');
@@ -20,16 +24,14 @@ header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 
-$allowedOrigin = $_SERVER['HTTP_ORIGIN'] ?? '*';
-header("Access-Control-Allow-Origin: $allowedOrigin");
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-API-Key, Authorization');
-header('Access-Control-Allow-Credentials: true');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+// Same-origin is the default. No reflective CORS headers are emitted.
+// A cross-origin client must not gain access merely by supplying an Origin header.
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
+    http_response_code(204);
     exit;
 }
+
+$requestId = RequestIdMiddleware::handle();
 
 // ====================== 3. LOAD CORE MODULES ======================
 require_once __DIR__ . '/core/auth-core.php';
@@ -69,22 +71,27 @@ function writeJsonFile(string $filePath, array $data): void {
     fclose($fp);
 }
 
-function jsonSuccess($data = null): void {
-    echo json_encode([
-        'success' => true,
-        'data' => $data,
-        'timestamp' => time()
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+function jsonSuccess($data = null): never {
+    ApiResponse::success($data);
 }
 
-function jsonError(string $message, int $code = 400, $details = null): void {
-    http_response_code($code);
-    $response = ['success' => false, 'error' => $message];
-    if ($details) $response['details'] = $details;
-    error_log("API Error [$code]: $message" . ($details ? ' - ' . json_encode($details) : ''));
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
-    exit;
+function jsonError(string $message, int $code = 400, $details = null): never {
+    $machineCode = is_array($details) && is_string($details['code'] ?? null)
+        ? $details['code']
+        : match ($code) {
+            400 => 'BAD_REQUEST', 401 => 'AUTH_REQUIRED', 403 => 'FORBIDDEN', 404 => 'NOT_FOUND',
+            405 => 'METHOD_NOT_ALLOWED', 409 => 'CONFLICT', 413 => 'REQUEST_TOO_LARGE',
+            415 => 'UNSUPPORTED_MEDIA_TYPE', 422 => 'VALIDATION_FAILED', 429 => 'RATE_LIMITED',
+            503 => 'SERVICE_UNAVAILABLE', default => ($code >= 500 ? 'INTERNAL_ERROR' : 'REQUEST_REJECTED'),
+        };
+    $title = match ($code) {
+        400 => 'Bad request', 401 => 'Unauthorized', 403 => 'Forbidden', 404 => 'Not found',
+        405 => 'Method not allowed', 409 => 'Conflict', 413 => 'Content too large',
+        415 => 'Unsupported media type', 422 => 'Unprocessable content', 429 => 'Too many requests',
+        503 => 'Service unavailable', default => ($code >= 500 ? 'Internal server error' : 'Request rejected'),
+    };
+    error_log('MR NEON API error: requestId=' . ApiResponse::requestId() . ' status=' . $code . ' code=' . (preg_match('/^[A-Z][A-Z0-9_]{1,63}$/D', $machineCode) ? $machineCode : 'INTERNAL_ERROR'));
+    ApiResponse::problem($code, $machineCode, $title, $message);
 }
 
 function getInput(): array {
@@ -93,8 +100,7 @@ function getInput(): array {
     if (empty($raw)) return [];
     $data = json_decode($raw, true);
     if (json_last_error() !== JSON_ERROR_NONE) {
-        error_log('JSON parse error: ' . json_last_error_msg());
-        jsonError('Invalid JSON: ' . json_last_error_msg(), 400);
+        jsonError('Invalid JSON request body', 400, ['code' => 'INVALID_JSON']);
     }
     return is_array($data) ? $data : [];
 }
@@ -224,10 +230,11 @@ function checkRateLimit(string $ip, string $action, int $maxRequests = 30, int $
 }
 
 // ====================== 8. AUTHENTICATION ======================
-function verifyApiKey(): void {
-    $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? '';
-    if ($apiKey !== API_KEY) jsonError('Invalid or missing API Key', 401);
-}
+/**
+ * Legacy API-key authentication was removed: a key shipped to a browser is public,
+ * not an authentication factor. The router below currently fails closed until
+ * Wave 3 installs server-side authorization.
+ */
 
 function getBearerToken(): ?string {
     $auth = $_SERVER['HTTP_AUTHORIZATION'] ??
@@ -278,70 +285,110 @@ function createSession(string $userId, array $userData): string {
 }
 
 function verifyAdminAuth(): void {
-    $username = $_SERVER['PHP_AUTH_USER'] ?? null;
-    $password = $_SERVER['PHP_AUTH_PW'] ?? null;
-    
-    // Fallback برای XAMPP و هاست‌های ایرانی
-    if (!$username || !$password) {
-        $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? 
-                $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
-        
-        if (empty($auth) && function_exists('apache_request_headers')) {
-            $headers = apache_request_headers();
-            $auth = $headers['Authorization'] ?? $headers['authorization'] ?? '';
-        }
-        
-        if (preg_match('/Basic\s+(.*)$/i', $auth, $matches)) {
-            $decoded = base64_decode($matches[1]);
-            if ($decoded !== false && strpos($decoded, ':') !== false) {
-                list($username, $password) = explode(':', $decoded, 2);
-            }
-        }
-    }
-    
-    if ($username !== ADMIN_USERNAME || $password !== ADMIN_PASSWORD) {
-        header('WWW-Authenticate: Basic realm="MR NEON Admin"');
-        jsonError('Admin authentication required', 401);
-    }
+    // Temporary fail-closed guard. Basic credentials and browser-held tokens are not
+    // accepted as the future admin authentication design; Wave 3 must replace this.
+    jsonError(
+        'عملیات مدیریتی تا تکمیل احراز هویت امن مدیر موقتاً غیرفعال است.',
+        503,
+        ['code' => 'ADMIN_AUTH_FOUNDATION_REQUIRED']
+    );
 }
 
 // ====================== 9. ROUTE HANDLER ======================
-$action = $_GET['action'] ?? '';
-$ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-
-$rateLimits = [
-    'register' => [5, 300],
-    'login' => [10, 300],
-    'forgotPassword' => [5, 600],
-    'sendVerificationCode' => [5, 300],
-    'verifyRegisterCode' => [10, 300],
-    'resendVerificationCode' => [3, 600],
-];
-
-$maxReqs = $rateLimits[$action][0] ?? 30;
-$window = $rateLimits[$action][1] ?? 60;
-
-if (!checkRateLimit($ip, $action, $maxReqs, $window)) {
-    jsonError('Too many requests. Please try again later.', 429);
+try {
+    $action = ApiRequest::action();
+    $method = ApiRequest::method();
+    MethodPolicy::enforce($action, $method);
+} catch (ApiProblemException $exception) {
+    ApiResponse::problem($exception->httpStatus, $exception->errorCode, $exception->title, $exception->getMessage(), $exception->responseHeaders);
+}
+// Wave 3 activates server-side session/authentication; W4-P2 adds the temporary registration-attempt route.
+// W4-P3 activates registration Challenge lifecycle; W4-P5 activates Recovery with reset-only authorization.
+if ($action === 'adminLogin') {
+    (new AdminAuthController())->dispatch();
+}
+// W4-P2 creates the registration attempt; W4-P3 owns Challenge lifecycle, verification and completion.
+// Telegram's webhook is authenticated by its dedicated provider secret header, not browser CSRF/session.
+if ($action === 'telegramWebhook') {
+    (new TelegramWebhookController())->dispatch();
+}
+if ($action === 'telegramLinkStatus') {
+    (new TelegramLinkController())->dispatchStatus();
+}
+if ($action === 'register') {
+    (new RegistrationController())->dispatch();
+}
+if (in_array($action, ['forgotPassword', 'verifyResetCode', 'resetPassword', 'verifyPasswordResetCode'], true)) {
+    (new RecoveryController())->dispatch($action);
+}
+if (in_array($action, ['sendVerificationCode', 'verifyRegisterCode', 'resendVerificationCode'], true)) {
+    (new VerificationController())->dispatch($action);
+}
+if (in_array($action, ['getSession', 'login', 'logout'], true)) {
+    (new AuthController())->dispatch($action);
+}
+// Wave 5/P1: canonical project creation and the advisory capacity preflight.
+// These routes must be dispatched before legacy authorization and fail-closed action gates.
+if (in_array($action, ['saveNeo', 'getActiveProjectsCount'], true)) {
+    (new ProjectController())->dispatch($action);
+}
+// Customer reads and communication use the DB-backed project owner scope, not legacy JSON handlers.
+if (in_array($action, ['getProjects', 'getProjectById', 'sendMessage', 'getNotifications', 'markNotificationRead', 'markCustomerMessagesRead'], true)) {
+    (new CustomerController())->dispatch($action);
+}
+// Admin dashboard and project operations use the canonical DB model and server-side admin session.
+if (in_array($action, ['getAll', 'getAllUsers', 'getAdminUserDetail', 'getAdminStats', 'getAdminProjectDetail', 'adminUpdate', 'adminUpdateUser', 'deleteRequest', 'adminSendMessage', 'markAdminMessagesRead', 'getAdminNotifications', 'getAdminMessages', 'getAdminAuditLog', 'getAdminSettingsSummary', 'markAdminNotificationRead', 'exportProjectsCsv'], true)) {
+    (new AdminProjectController())->dispatch($action);
 }
 
-$publicActions = [
-    'register', 'login', 'forgotPassword', 'verifyResetCode',
-    'sendVerificationCode', 'verifyRegisterCode', 'resendVerificationCode'
+if (!MethodPolicy::known($action)) {
+    ApiResponse::problem(404, 'UNKNOWN_ACTION', 'Not found', 'درخواست API شناخته نشد.');
+}
+
+try {
+    LegacyActionAuthorization::enforce($action, $method);
+} catch (ApiProblemException $exception) {
+    ApiResponse::problem($exception->httpStatus, $exception->errorCode, $exception->title, $exception->getMessage(), $exception->responseHeaders);
+} catch (Throwable $exception) {
+    error_log('MR NEON authorization dependency failure: requestId=' . ApiResponse::requestId() . ' type=' . get_class($exception));
+    ApiResponse::problem(503, 'AUTHORIZATION_UNAVAILABLE', 'Service unavailable', 'بررسی مجوز موقتاً در دسترس نیست.');
+}
+
+$actionPolicy = [
+    'login' => ['code' => 'SESSION_FOUNDATION_REQUIRED', 'message' => 'ورود تا تکمیل نشست امن سمت سرور موقتاً غیرفعال است.'],
+    'forgotPassword' => ['code' => 'RECOVERY_UPGRADE_REQUIRED', 'message' => 'بازیابی رمز تا تکمیل جریان امن موقتاً غیرفعال است.'],
+    'verifyResetCode' => ['code' => 'RECOVERY_UPGRADE_REQUIRED', 'message' => 'بازیابی رمز تا تکمیل جریان امن موقتاً غیرفعال است.'],
+    'getProjects' => ['code' => 'SESSION_FOUNDATION_REQUIRED', 'message' => 'دریافت پروژه‌ها تا تکمیل نشست امن موقتاً غیرفعال است.'],
+    'getProjectById' => ['code' => 'SESSION_FOUNDATION_REQUIRED', 'message' => 'دریافت پروژه تا تکمیل نشست امن موقتاً غیرفعال است.'],
+    'updateProject' => ['code' => 'SESSION_FOUNDATION_REQUIRED', 'message' => 'ویرایش پروژه تا تکمیل مجوزدهی امن موقتاً غیرفعال است.'],
+    'deleteProject' => ['code' => 'SESSION_FOUNDATION_REQUIRED', 'message' => 'عملیات پروژه تا تکمیل مجوزدهی امن موقتاً غیرفعال است.'],
+    'getNotifications' => ['code' => 'SESSION_FOUNDATION_REQUIRED', 'message' => 'اعلان‌ها تا تکمیل نشست امن موقتاً غیرفعال است.'],
+    'markNotificationRead' => ['code' => 'SESSION_FOUNDATION_REQUIRED', 'message' => 'تغییر اعلان تا تکمیل نشست امن موقتاً غیرفعال است.'],
+    'changeUsername' => ['code' => 'SESSION_FOUNDATION_REQUIRED', 'message' => 'تغییر حساب تا تکمیل نشست امن موقتاً غیرفعال است.'],
+    'changePassword' => ['code' => 'SESSION_FOUNDATION_REQUIRED', 'message' => 'تغییر رمز تا تکمیل نشست امن موقتاً غیرفعال است.'],
 ];
 
-if (!in_array($action, $publicActions)) verifyApiKey();
+// The active Wave 3 actions are dispatched above. All remaining registered legacy
+// actions are deliberately held closed until their domain/auth wave is accepted.
+if (!isset($actionPolicy[$action])) {
+    ApiResponse::problem(404, 'ACTION_NOT_IMPLEMENTED', 'Not found', 'این عملیات هنوز در API پیاده‌سازی نشده است.');
+}
+
+// Closed legacy actions do not execute their old JSON-backed rate limiter: even a rejected
+// request must not mutate the legacy data store. Active authentication uses the DB limiter.
+
+// No handler currently passes through this gate. Wave 3/4/5 must deliberately
+// remove each matching gate only after its new auth/domain contract and tests land.
+jsonError($actionPolicy[$action]['message'], 503, ['code' => $actionPolicy[$action]['code']]);
 
 try {
     switch ($action) {
-        case 'register': handleRegister(); break;
         case 'login': handleLogin(); break;
         case 'forgotPassword': handleForgotPassword(); break;
         case 'verifyResetCode': handleVerifyResetCode(); break;
         case 'sendVerificationCode': handleSendVerificationCode(); break;
         case 'verifyRegisterCode': handleVerifyRegisterCode(); break;
         case 'resendVerificationCode': handleResendVerificationCode(); break;
-        case 'saveNeo': handleSaveNeo(); break;
         case 'getProjects': handleGetProjects(); break;
         case 'getProjectById': handleGetProjectById(); break;
         case 'updateProject': handleUpdateProject(); break;
@@ -351,13 +398,13 @@ try {
         case 'getAllUsers': handleGetAllUsers(); break;
         case 'getNotifications': handleGetNotifications(); break;
         case 'markNotificationRead': handleMarkNotificationRead(); break;
-        case 'getActiveProjectsCount': handleGetActiveProjectsCount(); break;
         case 'deleteRequest': handleDeleteRequest(); break;
         case 'changeUsername': handleChangeUsername(); break;
         case 'changePassword': handleChangePassword(); break;
         default: jsonError('Unknown action: ' . $action, 400);
     }
 } catch (Throwable $e) {
-    error_log('API Exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-    jsonError('Server error: ' . $e->getMessage(), 500);
+    global $requestId;
+    error_log('MR NEON API exception: requestId=' . ($requestId ?? 'unavailable') . ' type=' . get_class($e));
+    jsonError('خطای داخلی سرور رخ داد. شناسهٔ درخواست را برای پیگیری نگه دارید.', 500, ['code' => 'INTERNAL_ERROR']);
 }

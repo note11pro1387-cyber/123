@@ -1,0 +1,39 @@
+<!-- MR NEON W6-P4: authenticated admin-only customer conversation inbox. -->
+<main id="adminMessagesPage" class="admin-messages-page" aria-labelledby="adminMessagesTitle">
+  <header class="admin-messages-heading">
+    <div>
+      <p class="admin-detail-eyebrow">فضای عملیاتی مدیریت</p>
+      <h1 id="adminMessagesTitle" tabindex="-1">صندوق پیام‌ها</h1>
+      <p class="admin-messages-intro">پیام‌های قابل‌مشاهدهٔ مشتری و مدیریت، مستقیماً از پیام‌های ثبت‌شدهٔ پروژه‌ها دریافت می‌شوند. یادداشت‌های داخلی در این صندوق نمایش داده نمی‌شوند.</p>
+    </div>
+    <div class="admin-messages-heading-actions">
+      <button type="button" class="btn btn-outline" id="adminMessagesRefreshBtn">تازه‌سازی</button>
+      <button type="button" class="btn btn-outline" id="adminMessagesLogoutBtn">خروج امن</button>
+    </div>
+  </header>
+
+  <div class="admin-messages-summary" aria-live="polite">
+    <span>پیام‌های مشتریِ خوانده‌نشده:</span>
+    <strong id="adminMessagesUnreadCount">—</strong>
+  </div>
+
+  <section aria-label="فیلتر و جست‌وجوی پیام‌ها">
+    <div class="admin-data-filters admin-messages-filters">
+      <label class="admin-filter-search" for="adminMessagesSearch"><span>جست‌وجو</span><input type="search" id="adminMessagesSearch" class="form-input" placeholder="متن پیام، کد پیگیری، پروژه یا مشتری" maxlength="100" autocomplete="off"></label>
+      <label for="adminMessagesSender"><span>فرستنده</span><select id="adminMessagesSender" class="form-input form-select"><option value="all">همهٔ فرستنده‌ها</option><option value="user">مشتری</option><option value="admin">مدیریت</option><option value="system">سامانه</option></select></label>
+      <label for="adminMessagesRead"><span>وضعیت خواندن</span><select id="adminMessagesRead" class="form-input form-select"><option value="all">همهٔ پیام‌ها</option><option value="unread">پیام‌های خوانده‌نشدهٔ مشتری</option><option value="read">خوانده‌شده</option></select></label>
+      <button type="button" class="btn btn-outline" id="adminMessagesRetryBtn" hidden>تلاش دوباره</button>
+    </div>
+  </section>
+
+  <p id="adminMessagesStatus" class="admin-state" role="status" aria-live="polite" aria-atomic="true" data-state="loading">در حال دریافت پیام‌ها از سرور…</p>
+  <div class="admin-data-table-wrap admin-messages-table-wrap" id="adminMessagesTableWrap" aria-busy="true">
+    <table class="admin-data-table admin-messages-table" aria-describedby="adminMessagesStatus">
+      <caption class="admin-visually-hidden">پیام‌های ثبت‌شدهٔ مشتری، مدیریت و سامانه در پروژه‌ها، همراه با وضعیت خواندن و عملیات گفت‌وگو</caption>
+      <thead><tr><th scope="col">زمان</th><th scope="col">مشتری</th><th scope="col">پروژه</th><th scope="col">فرستنده</th><th scope="col">متن پیام</th><th scope="col">خواندن</th><th scope="col">عملیات</th></tr></thead>
+      <tbody id="adminMessagesTbody"><tr><td colspan="7" class="admin-state-cell">در حال بارگذاری…</td></tr></tbody>
+    </table>
+  </div>
+  <nav id="adminMessagesPagination" class="admin-data-pagination" aria-label="صفحه‌بندی صندوق پیام‌ها"></nav>
+  <p class="admin-messages-footnote">هر ردیف به گفت‌وگوی همان پروژه متصل است. بازکردن گفت‌وگو وضعیت خواندن پیام‌های ورودی مشتری را از طریق API ثبت می‌کند؛ شکست این عملیات به‌عنوان موفقیت نمایش داده نمی‌شود.</p>
+</main>

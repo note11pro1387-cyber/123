@@ -1,0 +1,23 @@
+CREATE TABLE outbox_events (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    public_id CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    event_type VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    aggregate_type VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    aggregate_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    channel_type ENUM('telegram','email','sms') NOT NULL,
+    status ENUM('pending','processing','sent','retry','dead') NOT NULL DEFAULT 'pending',
+    payload_json LONGTEXT NOT NULL,
+    idempotency_key VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    next_attempt_at DATETIME(6) NOT NULL,
+    lease_until DATETIME(6) NULL,
+    accepted_at DATETIME(6) NULL,
+    last_safe_error VARCHAR(500) NULL,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_outbox_public_id (public_id),
+    UNIQUE KEY uq_outbox_idempotency (idempotency_key),
+    KEY ix_outbox_due (status, next_attempt_at, lease_until),
+    KEY ix_outbox_aggregate (aggregate_type, aggregate_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

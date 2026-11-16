@@ -1,0 +1,20 @@
+CREATE TABLE user_channels (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    channel_type ENUM('email','telegram') NOT NULL,
+    channel_value VARCHAR(255) NOT NULL,
+    normalized_value VARCHAR(255) NOT NULL,
+    provider_subject_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    is_verified TINYINT(1) NOT NULL DEFAULT 0,
+    verified_at DATETIME(6) NULL,
+    is_primary TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME(6) NOT NULL,
+    updated_at DATETIME(6) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_user_channels_type_value (channel_type, normalized_value),
+    UNIQUE KEY uq_user_channels_binding (id, user_id, channel_type),
+    UNIQUE KEY uq_user_channels_provider_subject (channel_type, provider_subject_id),
+    KEY ix_user_channels_user_type (user_id, channel_type),
+    CONSTRAINT fk_user_channels_user FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT chk_user_channels_verification CHECK ((is_verified = 0 AND verified_at IS NULL) OR (is_verified = 1 AND verified_at IS NOT NULL))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

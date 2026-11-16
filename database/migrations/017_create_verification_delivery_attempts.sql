@@ -1,0 +1,21 @@
+CREATE TABLE verification_delivery_attempts (
+    challenge_id CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    purpose ENUM('registration','password_reset') NOT NULL,
+    subject_type ENUM('registration_attempt','user') NOT NULL,
+    registration_attempt_id CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    user_id BIGINT UNSIGNED NULL,
+    delivery_kind ENUM('initial','resend') NOT NULL,
+    channel_type ENUM('email','telegram') NOT NULL,
+    destination_hmac CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    state ENUM('prepared','accepted','rejected','unknown','not_configured') NOT NULL DEFAULT 'prepared',
+    result_code VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    created_at DATETIME(6) NOT NULL,
+    resolved_at DATETIME(6) NULL,
+    PRIMARY KEY (challenge_id),
+    KEY ix_delivery_attempt_registration (registration_attempt_id, purpose, state, created_at),
+    KEY ix_delivery_attempt_user (user_id, purpose, state, created_at),
+    CONSTRAINT fk_delivery_attempt_registration FOREIGN KEY (registration_attempt_id) REFERENCES registration_attempts(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_delivery_attempt_user FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT chk_delivery_attempt_subject CHECK ((purpose = 'registration' AND subject_type = 'registration_attempt' AND registration_attempt_id IS NOT NULL AND user_id IS NULL) OR (purpose = 'password_reset' AND subject_type = 'user' AND user_id IS NOT NULL AND registration_attempt_id IS NULL)),
+    CONSTRAINT chk_delivery_attempt_resolution CHECK ((state = 'prepared' AND resolved_at IS NULL AND result_code IS NULL) OR (state <> 'prepared' AND resolved_at IS NOT NULL AND result_code IS NOT NULL))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

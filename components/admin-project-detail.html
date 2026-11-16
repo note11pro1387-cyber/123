@@ -1,0 +1,64 @@
+<!-- MR NEON: Admin-only project detail dialog. Not included in public pages. -->
+<div class="admin-project-detail-modal" id="adminProjectDetailModal" hidden aria-hidden="true">
+  <div class="admin-project-detail-backdrop" data-admin-detail-backdrop></div>
+  <section class="admin-project-detail-shell" role="dialog" aria-modal="true" aria-labelledby="adminProjectDetailTitle" aria-describedby="adminProjectDetailStatus" tabindex="-1">
+    <header class="admin-project-detail-header">
+      <div><p class="admin-detail-eyebrow">کنترل عملیاتی پروژه</p><h2 id="adminProjectDetailTitle">جزئیات پروژه</h2></div>
+      <button type="button" id="adminDetailClose" class="admin-modal-close" aria-label="بستن جزئیات">×</button>
+    </header>
+    <p class="admin-state" id="adminProjectDetailStatus" role="status" aria-live="polite" aria-atomic="true" data-state="loading">در حال دریافت اطلاعات…</p>
+    <button type="button" class="btn btn-outline btn-sm admin-detail-retry" id="adminProjectDetailRetryBtn" hidden>تلاش دوباره برای دریافت جزئیات</button>
+    <div class="admin-project-detail-skeleton" id="adminProjectDetailSkeleton" hidden aria-hidden="true">
+      <section class="admin-detail-skeleton-section">
+        <span class="admin-skeleton-shape admin-detail-skeleton-heading"></span>
+        <div class="admin-detail-skeleton-grid">
+          <div class="admin-detail-skeleton-field"><span class="admin-skeleton-shape admin-detail-skeleton-label"></span><span class="admin-skeleton-shape admin-detail-skeleton-value"></span></div>
+          <div class="admin-detail-skeleton-field"><span class="admin-skeleton-shape admin-detail-skeleton-label"></span><span class="admin-skeleton-shape admin-detail-skeleton-value admin-detail-skeleton-value--medium"></span></div>
+          <div class="admin-detail-skeleton-field"><span class="admin-skeleton-shape admin-detail-skeleton-label"></span><span class="admin-skeleton-shape admin-detail-skeleton-value admin-detail-skeleton-value--short"></span></div>
+          <div class="admin-detail-skeleton-field"><span class="admin-skeleton-shape admin-detail-skeleton-label"></span><span class="admin-skeleton-shape admin-detail-skeleton-value"></span></div>
+          <div class="admin-detail-skeleton-field admin-detail-skeleton-wide"><span class="admin-skeleton-shape admin-detail-skeleton-label"></span><span class="admin-skeleton-shape admin-detail-skeleton-value admin-detail-skeleton-value--wide"></span></div>
+        </div>
+      </section>
+      <section class="admin-detail-skeleton-section">
+        <span class="admin-skeleton-shape admin-detail-skeleton-heading admin-detail-skeleton-heading--owner"></span>
+        <div class="admin-detail-skeleton-grid">
+          <div class="admin-detail-skeleton-field"><span class="admin-skeleton-shape admin-detail-skeleton-label"></span><span class="admin-skeleton-shape admin-detail-skeleton-value"></span></div>
+          <div class="admin-detail-skeleton-field"><span class="admin-skeleton-shape admin-detail-skeleton-label"></span><span class="admin-skeleton-shape admin-detail-skeleton-value admin-detail-skeleton-value--medium"></span></div>
+          <div class="admin-detail-skeleton-field"><span class="admin-skeleton-shape admin-detail-skeleton-label"></span><span class="admin-skeleton-shape admin-detail-skeleton-value admin-detail-skeleton-value--short"></span></div>
+          <div class="admin-detail-skeleton-field"><span class="admin-skeleton-shape admin-detail-skeleton-label"></span><span class="admin-skeleton-shape admin-detail-skeleton-value"></span></div>
+        </div>
+      </section>
+      <section class="admin-detail-skeleton-section">
+        <span class="admin-skeleton-shape admin-detail-skeleton-heading"></span>
+        <div class="admin-detail-skeleton-list">
+          <div class="admin-detail-skeleton-list-item"><span class="admin-skeleton-shape admin-detail-skeleton-list-title"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-line"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-meta"></span></div>
+          <div class="admin-detail-skeleton-list-item"><span class="admin-skeleton-shape admin-detail-skeleton-list-title admin-detail-skeleton-list-title--medium"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-line"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-meta"></span></div>
+        </div>
+      </section>
+      <section class="admin-detail-skeleton-section">
+        <span class="admin-skeleton-shape admin-detail-skeleton-heading"></span>
+        <div class="admin-detail-skeleton-list">
+          <div class="admin-detail-skeleton-list-item"><span class="admin-skeleton-shape admin-detail-skeleton-list-title"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-line"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-meta"></span></div>
+          <div class="admin-detail-skeleton-list-item"><span class="admin-skeleton-shape admin-detail-skeleton-list-title admin-detail-skeleton-list-title--short"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-line admin-detail-skeleton-list-line--medium"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-meta"></span></div>
+        </div>
+      </section>
+      <section class="admin-detail-skeleton-section">
+        <span class="admin-skeleton-shape admin-detail-skeleton-heading"></span>
+        <div class="admin-detail-skeleton-list">
+          <div class="admin-detail-skeleton-list-item"><span class="admin-skeleton-shape admin-detail-skeleton-list-title"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-line"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-meta"></span></div>
+          <div class="admin-detail-skeleton-list-item"><span class="admin-skeleton-shape admin-detail-skeleton-list-title admin-detail-skeleton-list-title--medium"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-line"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-meta"></span></div>
+        </div>
+      </section>
+      <section class="admin-detail-skeleton-section">
+        <span class="admin-skeleton-shape admin-detail-skeleton-heading admin-detail-skeleton-heading--notes"></span>
+        <div class="admin-detail-skeleton-list-item"><span class="admin-skeleton-shape admin-detail-skeleton-list-line"></span><span class="admin-skeleton-shape admin-detail-skeleton-list-meta"></span></div>
+      </section>
+    </div>
+    <div class="admin-project-detail-body" id="adminProjectDetailBody" aria-busy="false"></div>
+    <form id="adminInternalNoteForm" class="admin-internal-note-form">
+      <label for="adminInternalNoteInput">افزودن یادداشت داخلی (فقط مدیریت)</label>
+      <textarea id="adminInternalNoteInput" name="internalNote" maxlength="2000" rows="3" placeholder="این متن در timeline یا اعلان مشتری نمایش داده نمی‌شود." required></textarea>
+      <button type="submit" class="btn btn-primary" id="adminInternalNoteSubmit" disabled>ثبت یادداشت داخلی</button>
+    </form>
+  </section>
+</div>

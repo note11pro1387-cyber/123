@@ -1,0 +1,14 @@
+<!-- Dedicated admin user dossier page; content is populated only by the role-protected API. -->
+<main class="admin-user-detail-modal admin-user-detail-view" id="adminUserDetailModal" hidden aria-hidden="true" aria-labelledby="adminUserDetailTitle" aria-describedby="adminUserDetailStatus">
+  <section class="admin-project-detail-shell admin-user-detail-shell">
+    <header class="admin-project-detail-header">
+      <div><p class="admin-kicker">MR NEON / ACCOUNT DOSSIER</p><h1 id="adminUserDetailTitle" tabindex="-1">پروندهٔ کاربر</h1></div>
+      <button type="button" class="btn btn-outline btn-sm" id="adminUserDetailClose" aria-label="بازگشت از پروندهٔ کاربر">بازگشت به مدیریت</button>
+    </header>
+    <p class="admin-state" id="adminUserDetailStatus" role="status" aria-live="polite" aria-atomic="true" data-state="idle">با انتخاب کاربر، اطلاعات مجاز از API مدیریت دریافت می‌شود.</p>
+    <div class="admin-user-detail-retry" id="adminUserDetailRetryPanel" hidden>
+      <button type="button" class="btn btn-outline btn-sm" id="adminUserDetailRetryBtn">تلاش دوباره برای دریافت پرونده</button>
+    </div>
+    <div class="admin-project-detail-body admin-user-detail-body" id="adminUserDetailBody" aria-busy="false"></div>
+  </section>
+</main>

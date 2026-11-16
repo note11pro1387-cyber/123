@@ -10,56 +10,22 @@
  * 🧠 AI NOTE: منطق اعتبارسنجی توکن و API Key در api.php انجام می‌شود. این فایل فقط منطق خالص Auth را انجام می‌دهد.
  */
 
+/**
+ * Legacy JSON-backed OTP delivery is deliberately disabled.
+ * Registration verification must use the database-backed W4-P3 Challenge service;
+ * keeping the old helper callable must not restore its 600-second TTL or JSON OTP store.
+ */
 function sendVerificationCode(string $identifier, string $fullName, string $type = 'register'): array {
-    $code = generateVerificationCode();
-    $expiresAt = time() + 600; // 10 minutes
-    
-    $verifications = readJsonFile(VERIFICATION_FILE);
-    $verifications = array_filter($verifications, fn($v) => $v['expiresAt'] > time());
-    
-    $verifications[] = [
-        'id' => uniqid('ver_'),
-        'identifier' => $identifier,
-        'code' => password_hash($code, PASSWORD_BCRYPT),
-        'type' => $type,
-        'expiresAt' => $expiresAt,
-        'attempts' => 0,
-        'used' => false,
-        'createdAt' => date('Y-m-d H:i:s'),
-    ];
-    writeJsonFile(VERIFICATION_FILE, array_values($verifications));
-    
-    // ارسال به تلگرام (همیشه)
-    $telegramSent = sendVerificationToTelegram($identifier, $code, $fullName, $type);
-    
     return [
-        'code_sent' => $telegramSent,
-        'telegram_sent' => $telegramSent,
-        'method' => 'telegram',
+        'code_sent' => false,
+        'telegram_sent' => false,
+        'method' => 'disabled',
+        'error_code' => 'LEGACY_OTP_DISABLED',
     ];
 }
 
+/** Legacy OTP records cannot verify any registration or recovery operation. */
 function verifyCode(string $identifier, string $code, string $type = 'register'): bool {
-    $verifications = readJsonFile(VERIFICATION_FILE);
-    
-    foreach ($verifications as $index => $v) {
-        if ($v['identifier'] === $identifier &&
-            $v['type'] === $type &&
-            !$v['used'] &&
-            $v['expiresAt'] > time() &&
-            $v['attempts'] < 5 &&
-            password_verify($code, $v['code'])) {
-            
-            $verifications[$index]['used'] = true;
-            writeJsonFile(VERIFICATION_FILE, array_values($verifications));
-            return true;
-        }
-        
-        if ($v['identifier'] === $identifier && $v['type'] === $type && !$v['used'] && $v['expiresAt'] > time()) {
-            $verifications[$index]['attempts']++;
-            writeJsonFile(VERIFICATION_FILE, array_values($verifications));
-        }
-    }
     return false;
 }
 
@@ -198,43 +164,11 @@ function handleVerifyRegisterCode(): void {
 }
 
 function handleSendVerificationCode(): void {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonError('Method not allowed', 405);
-    $input = getInput();
-    $identifier = sanitizeString($input['identifier'] ?? '');
-    $fullName = sanitizeString($input['fullName'] ?? '');
-    $type = sanitizeString($input['type'] ?? 'register');
-    
-    if (empty($identifier)) jsonError('Identifier required', 422);
-    
-    $result = sendVerificationCode($identifier, $fullName, $type);
-    jsonSuccess($result);
+    jsonError('مسیر قدیمی کد تأیید غیرفعال است؛ از جریان ثبت‌نام مبتنی بر Challenge استفاده کنید.', 503, ['code' => 'LEGACY_OTP_DISABLED']);
 }
 
 function handleResendVerificationCode(): void {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonError('Method not allowed', 405);
-    
-    $input = getInput();
-    $userId = $input['userId'] ?? '';
-    if (empty($userId)) jsonError('User ID required', 422);
-    
-    $pendingRegs = readJsonFile(DATA_DIR . '/pending_registrations.json');
-    if (!isset($pendingRegs[$userId])) jsonError('Registration not found', 404);
-    
-    $pending = $pendingRegs[$userId];
-    
-    $verifications = readJsonFile(VERIFICATION_FILE);
-    $recentCount = 0;
-    foreach ($verifications as $v) {
-        if ($v['identifier'] === $pending['telegramId'] &&
-            $v['createdAt'] > date('Y-m-d H:i:s', time() - 600)) {
-            $recentCount++;
-        }
-    }
-    
-    if ($recentCount >= 3) jsonError('تعداد دفعات ارسال کد بیش از حد مجاز است. ۱۰ دقیقه صبر کنید.', 429);
-    
-    $result = sendVerificationCode($pending['telegramId'], $pending['fullName'], 'register');
-    jsonSuccess($result);
+    jsonError('مسیر قدیمی کد تأیید غیرفعال است؛ از جریان ثبت‌نام مبتنی بر Challenge استفاده کنید.', 503, ['code' => 'LEGACY_OTP_DISABLED']);
 }
 
 function handleLogin(): void {
@@ -287,94 +221,14 @@ function handleLogin(): void {
 }
 
 function handleForgotPassword(): void {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonError('Method not allowed', 405);
-    
-    $input = getInput();
-    $identifier = sanitizeString($input['identifier'] ?? '');
-    
-    if (empty($identifier)) jsonError('شناسه الزامی است', 422);
-    
-    $users = readJsonFile(DATA_DIR . '/users.json');
-    $found = null;
-    
-    foreach ($users as $user) {
-        if (!empty($user['telegramId']) && $user['telegramId'] === $identifier) {
-            $found = $user; break;
-        }
-        if ($user['phone'] === $identifier) {
-            $found = $user; break;
-        }
-    }
-    
-    if (!$found) {
-        jsonSuccess([
-            'message' => 'If the account exists, a reset code will be sent',
-            'found' => false,
-        ]);
-        return;
-    }
-    
-    $telegramId = $found['telegramId'] ?? $identifier;
-    $result = sendVerificationCode($telegramId, $found['fullName'], 'password_reset');
-    
-    $resets = readJsonFile(DATA_DIR . '/password_resets.json');
-    $resets[] = [
-        'id' => uniqid('reset_'),
-        'userId' => $found['id'],
-        'identifier' => $telegramId,
-        'expiresAt' => time() + 900,
-        'createdAt' => date('Y-m-d H:i:s'),
-    ];
-    writeJsonFile(DATA_DIR . '/password_resets.json', $resets);
-    
-    jsonSuccess([
-        'found' => true,
-        'userId' => $found['id'],
-        'method' => 'telegram',
-        'identifier' => $telegramId,
-        'message' => "کد بازیابی به تلگرام ارسال شد",
-    ]);
+    // W4-P5 replaces the legacy JSON-backed recovery path. Keep the old callable closed
+    // so a future router refactor cannot reactivate insecure identifier/User-ID matching.
+    jsonError('این مسیر قدیمی غیرفعال است؛ جریان امن بازیابی را از API آغاز کنید.', 410, ['code' => 'RECOVERY_FLOW_UPDATED']);
 }
 
 function handleVerifyResetCode(): void {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonError('Method not allowed', 405);
-    
-    $input = getInput();
-    $identifier = sanitizeString($input['identifier'] ?? '');
-    $code = sanitizeString($input['code'] ?? '');
-    $newPassword = $input['newPassword'] ?? '';
-    $userId = $input['userId'] ?? '';
-    
-    if (empty($identifier) || empty($code) || empty($newPassword)) jsonError('تمام فیلدها الزامی است', 422);
-    if (!validatePassword($newPassword)) jsonError('رمز عبور باید حداقل ۸ کاراکتر شامل حروف و عدد باشد', 422);
-    
-    if (!verifyCode($identifier, $code, 'password_reset')) {
-        jsonError('کد نامعتبر یا منقضی شده است', 400);
-    }
-    
-    $users = readJsonFile(DATA_DIR . '/users.json');
-    $found = false;
-    $targetId = null;
-    
-    foreach ($users as &$u) {
-        if ($u['id'] === $userId ||
-            ($u['telegramId'] ?? '') === $identifier ||
-            $u['phone'] === $identifier) {
-            $u['password'] = password_hash($newPassword, PASSWORD_ARGON2ID);
-            $found = true;
-            $targetId = $u['id'];
-            break;
-        }
-    }
-    
-    if (!$found) jsonError('User not found', 404);
-    writeJsonFile(DATA_DIR . '/users.json', $users);
-    
-    $sessions = readJsonFile(DATA_DIR . '/sessions.json');
-    $sessions = array_filter($sessions, fn($s) => $s['user_id'] !== $targetId);
-    writeJsonFile(DATA_DIR . '/sessions.json', $sessions);
-    
-    jsonSuccess(['message' => 'رمز عبور با موفقیت بازنشانی شد']);
+    // OTP proof and password reset are now separate operations protected by reset-only authorization.
+    jsonError('این مسیر قدیمی غیرفعال است؛ جریان امن بازیابی را از API آغاز کنید.', 410, ['code' => 'RECOVERY_FLOW_UPDATED']);
 }
 
 function handleChangeUsername(): void {

@@ -1,0 +1,34 @@
+<!-- MR NEON W6-P5: read-only, role-protected audit timeline with an explicit non-sensitive DTO. -->
+<main id="adminAuditPage" class="admin-audit-page" aria-labelledby="adminAuditTitle">
+  <header class="admin-audit-heading">
+    <div>
+      <p class="admin-detail-eyebrow">ثبت رویدادهای عملیاتی</p>
+      <h1 id="adminAuditTitle" tabindex="-1">گزارش‌های ممیزی</h1>
+      <p class="admin-audit-intro">این صفحه فقط رویدادهای ثبت‌شده را نمایش می‌دهد و امکان ویرایش یا حذف آن‌ها را ندارد. شناسه‌های داخلی، شناسهٔ درخواست، هش‌های IP و مرورگر و فرادادهٔ خام در این نما نمایش داده نمی‌شوند.</p>
+    </div>
+    <div class="admin-audit-heading-actions">
+      <button type="button" class="btn btn-outline" id="adminAuditRefreshBtn">تازه‌سازی</button>
+      <button type="button" class="btn btn-outline" id="adminAuditLogoutBtn">خروج امن</button>
+    </div>
+  </header>
+
+  <section aria-label="فیلتر گزارش ممیزی">
+    <div class="admin-data-filters admin-audit-filters">
+      <label class="admin-filter-search" for="adminAuditSearch"><span>نام رویداد</span><input type="search" id="adminAuditSearch" class="form-input" placeholder="مثلاً project.status_changed" maxlength="80" autocomplete="off" spellcheck="false"></label>
+      <label for="adminAuditActor"><span>عامل رویداد</span><select id="adminAuditActor" class="form-input form-select"><option value="all">همه</option><option value="admin">مدیر</option><option value="user">کاربر</option><option value="system">سامانه</option><option value="anonymous">ناشناس</option></select></label>
+      <label for="adminAuditSubject"><span>نوع موضوع</span><select id="adminAuditSubject" class="form-input form-select"><option value="all">همه</option><option value="user">حساب کاربری</option><option value="project">پروژه</option><option value="registration_attempt">درخواست ثبت‌نام</option><option value="other">سایر موضوع‌ها</option><option value="none">بدون موضوع مشخص</option></select></label>
+      <button type="button" class="btn btn-outline" id="adminAuditRetryBtn" hidden>تلاش دوباره</button>
+    </div>
+  </section>
+
+  <p id="adminAuditStatus" class="admin-state" role="status" aria-live="polite" aria-atomic="true" data-state="loading">در حال دریافت گزارش‌های ممیزی از سرور…</p>
+  <div class="admin-data-table-wrap admin-audit-table-wrap" id="adminAuditTableWrap" aria-busy="true">
+    <table class="admin-data-table admin-audit-table" aria-describedby="adminAuditStatus">
+      <caption class="admin-visually-hidden">رویدادهای ممیزی ثبت‌شده، شامل زمان، عامل، نوع رویداد و موضوع مرتبط</caption>
+      <thead><tr><th scope="col">زمان (UTC)</th><th scope="col">عامل</th><th scope="col">رویداد</th><th scope="col">نوع موضوع</th></tr></thead>
+      <tbody id="adminAuditTbody"><tr><td colspan="4" class="admin-state-cell">در حال بارگذاری…</td></tr></tbody>
+    </table>
+  </div>
+  <nav id="adminAuditPagination" class="admin-data-pagination" aria-label="صفحه‌بندی گزارش‌های ممیزی"></nav>
+  <p class="admin-audit-footnote">مرتب‌سازی بر اساس تازه‌ترین رویداد و ترتیب پایدار داخلی انجام می‌شود. فیلترها فقط روی داده‌های ثبت‌شده اعمال می‌شوند؛ این نما وجود رویدادهایی را که در منبع ثبت نشده‌اند اثبات نمی‌کند.</p>
+</main>

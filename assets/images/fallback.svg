@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="840" viewBox="0 0 1200 840" role="img" aria-labelledby="title desc">
+  <title id="title">تصویر در دسترس نیست</title>
+  <desc id="desc">پس‌زمینهٔ انتزاعی با هویت بصری MR NEON؛ این تصویر جایگزین نمونه‌کار نیست.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#080d1a"/><stop offset="1" stop-color="#15243b"/></linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".85"/><stop offset="1" stop-color="#0d9488" stop-opacity=".25"/></linearGradient>
+    <radialGradient id="glow"><stop offset="0" stop-color="#06b6d4" stop-opacity=".24"/><stop offset="1" stop-color="#06b6d4" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="840" fill="url(#bg)"/>
+  <circle cx="930" cy="220" r="340" fill="url(#glow)"/>
+  <g fill="none" stroke="url(#line)" stroke-width="2" opacity=".75">
+    <path d="M64 620 L300 384 L455 539 L710 284 L940 514 L1138 316"/>
+    <path d="M64 682 L300 446 L455 601 L710 346 L940 576 L1138 378" opacity=".35"/>
+    <rect x="72" y="72" width="1056" height="696" rx="34" stroke-opacity=".42"/>
+    <path d="M128 168 H300 M128 204 H240" stroke-linecap="round"/>
+  </g>
+  <g fill="#e2e8f0" font-family="Vazirmatn, Tahoma, sans-serif" text-anchor="middle">
+    <text x="600" y="365" font-size="52" font-weight="700" letter-spacing="1">MR • NEON</text>
+    <text x="600" y="430" font-size="31" fill="#94a3b8">تصویر در دسترس نیست</text>
+    <text x="600" y="484" font-size="22" fill="#67e8f9">MR NEON</text>
+  </g>
+</svg>

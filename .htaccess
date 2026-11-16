@@ -1,0 +1,25 @@
+# MR NEON - Apache/XAMPP hardening. Nginx and other servers need equivalent rules.
+Options -Indexes
+
+# Serve a host-aware robots policy while keeping robots.txt as a safe static fallback.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^robots\.txt$ robots.php [END]
+  # Source, operational, developer and repository metadata are never public routes.
+  # The assets/ tree is intentionally not included; CSS/JS/fonts/images stay public.
+  RewriteRule ^(?:\.git|\.github|app|bin|core|data|database|docs|reports|tests|tools)(?:/|$) - [F,END,NC]
+</IfModule>
+
+# Deny sensitive root-level files and private key containers. Public CA certificates
+# are not blanket-blocked by extension; private storage must live outside DocumentRoot.
+<IfModule mod_authz_core.c>
+  <FilesMatch "^(?:config(?:\.[^.]+)?\.php|\.env(?:\..*)?|composer\.(?:json|lock)|phpunit\.xml(?:\.dist)?|(?:MR-NEON|W[0-9]).*\.(?:md|py|csv|sha256|zip)|.*\.(?:md|markdown|py|csv|sha256|sql|log|sqlite|db|bak|backup|dump|key|p12|pfx|jks|keystore))$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+  <FilesMatch "^(?:config(?:\.[^.]+)?\.php|\.env(?:\..*)?|composer\.(?:json|lock)|phpunit\.xml(?:\.dist)?|(?:MR-NEON|W[0-9]).*\.(?:md|py|csv|sha256|zip)|.*\.(?:md|markdown|py|csv|sha256|sql|log|sqlite|db|bak|backup|dump|key|p12|pfx|jks|keystore))$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>

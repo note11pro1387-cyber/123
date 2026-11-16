@@ -1,0 +1,64 @@
+<!-- MR NEON W6-P6: safe, read-only runtime configuration summary. -->
+<main id="adminSettingsPage" class="admin-settings-page" aria-labelledby="adminSettingsTitle">
+  <header class="admin-settings-heading">
+    <div>
+      <p class="admin-detail-eyebrow">پیکربندی و آمادگی اجرایی</p>
+      <h1 id="adminSettingsTitle" tabindex="-1">تنظیمات مدیریت</h1>
+      <p class="admin-settings-intro">این نما فقط خلاصه‌ای محدود از پیکربندی مؤثر در درخواست فعلی را نشان می‌دهد. مقدار متغیرها، رمزها، توکن‌ها، نشانی دیتابیس و اطلاعات خصوصی نمایش داده نمی‌شوند و از این صفحه هیچ تنظیمی تغییر نمی‌کند.</p>
+    </div>
+    <div class="admin-settings-heading-actions">
+      <button type="button" class="btn btn-outline" id="adminSettingsRefreshBtn">تازه‌سازی وضعیت</button>
+      <button type="button" class="btn btn-outline" id="adminSettingsLogoutBtn">خروج امن</button>
+    </div>
+  </header>
+
+  <p id="adminSettingsStatus" class="admin-state" role="status" aria-live="polite" aria-atomic="true" data-state="loading">خلاصهٔ تنظیمات امن از سرور دریافت می‌شود…</p>
+  <button type="button" class="btn btn-outline" id="adminSettingsRetryBtn" hidden>تلاش دوباره</button>
+
+  <section class="admin-settings-grid" id="adminSettingsGrid" aria-label="وضعیت تنظیمات" aria-describedby="adminSettingsStatus" aria-busy="false">
+    <article class="admin-settings-card">
+      <h2>محیط و آدرس عمومی</h2>
+      <dl>
+        <div><dt>محیط اجرایی</dt><dd id="adminSettingEnvironment">در انتظار دادهٔ سرور</dd></div>
+        <div><dt>آدرس عمومی معتبر</dt><dd id="adminSettingPublicBaseUrl">در انتظار دادهٔ سرور</dd></div>
+        <div><dt>اتصال دیتابیس در درخواست فعلی</dt><dd id="adminSettingDatabase">در انتظار دادهٔ سرور</dd></div>
+      </dl>
+    </article>
+    <article class="admin-settings-card">
+      <h2>ایمیل</h2>
+      <dl><div><dt>کامل‌بودن ساختاری تنظیم SMTP</dt><dd id="adminSettingEmail">در انتظار دادهٔ سرور</dd></div></dl>
+      <p class="admin-settings-card-note">کامل‌بودن مقادیر به معنی برقراری اتصال SMTP، پذیرش پیام یا تحویل ایمیل نیست؛ هیچ پیام آزمایشی ارسال نمی‌شود.</p>
+    </article>
+    <article class="admin-settings-card">
+      <h2>تلگرام</h2>
+      <dl>
+        <div><dt>قالب توکن Bot</dt><dd id="adminSettingTelegramBot">در انتظار دادهٔ سرور</dd></div>
+        <div><dt>شناسهٔ مقصد مدیر</dt><dd id="adminSettingTelegramAdmin">در انتظار دادهٔ سرور</dd></div>
+        <div><dt>Bot اعلان</dt><dd id="adminSettingTelegramNotifier">در انتظار دادهٔ سرور</dd></div>
+        <div><dt>پیش‌نیازهای ایستای اتصال حساب</dt><dd id="adminSettingTelegramLink">در انتظار دادهٔ سرور</dd></div>
+      </dl>
+      <p class="admin-settings-card-note">هیچ درخواست شبکه‌ای به تلگرام ارسال نمی‌شود و وضعیت Webhook نزد Provider از این صفحه قابل اثبات نیست.</p>
+    </article>
+    <article class="admin-settings-card">
+      <h2>ورود مدیریت</h2>
+      <dl>
+        <div><dt>نام کاربری تنظیم شده</dt><dd id="adminSettingAdminUsername">در انتظار دادهٔ سرور</dd></div>
+        <div><dt>هش رمز با الگوریتم شناخته‌شده</dt><dd id="adminSettingAdminPassword">در انتظار دادهٔ سرور</dd></div>
+        <div><dt>وجود Secret مربوط به TOTP</dt><dd id="adminSettingAdminTotp">در انتظار دادهٔ سرور</dd></div>
+      </dl>
+      <p class="admin-settings-card-note admin-settings-attention">وجود تنظیم TOTP به‌تنهایی اثبات‌کنندهٔ صحت ورود دومرحله‌ای در محیط زنده نیست. وضعیت Recovery Codes یا معادل مصوب باید در گیت امنیتی انتشار جداگانه بررسی شود.</p>
+    </article>
+    <article class="admin-settings-card">
+      <h2>کلیدهای امنیتی و سیاست‌ها</h2>
+      <dl>
+        <div><dt>حداقل طول کلید HMAC کد تأیید (۳۲ بایت)</dt><dd id="adminSettingOtpKey">در انتظار دادهٔ سرور</dd></div>
+        <div><dt>قالب شناسهٔ نسخهٔ قوانین/حریم خصوصی</dt><dd id="adminSettingTermsVersion">در انتظار دادهٔ سرور</dd></div>
+        <div><dt>پیامک (SMS)</dt><dd id="adminSettingSms">در انتظار دادهٔ سرور</dd></div>
+      </dl>
+      <p class="admin-settings-card-note">زیرساخت محدودیت نرخ پیش از اجرای همین API فعال است؛ اگر این زیرساخت درخواست را رد کند، خلاصهٔ تنظیمات قابل دریافت نیست و سلامت سایر مقادیر از این خطا نتیجه‌گیری نمی‌شود.</p>
+    </article>
+  </section>
+
+  <p class="admin-settings-footnote"><strong>محدودهٔ این گزارش:</strong> فقط حضور و اعتبارسنجی محدود تنظیمات در زمان درخواست. این گزارش جایگزین بررسی Host، HTTPS، مجوزهای فایل، آزمون واقعی ارسال/دریافت، بازبینی امنیتی، بررسی Recovery Codes یا تأیید Release Gate نیست. این صفحه تنظیمات را ویرایش یا ذخیره نمی‌کند.</p>
+  <p id="adminSettingsGeneratedAt" class="admin-settings-generated" hidden></p>
+</main>
