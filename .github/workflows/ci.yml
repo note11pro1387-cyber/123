@@ -119,6 +119,20 @@ jobs:
         run: python3 tools/wave3_static_checks.py .
       - name: Wave 3 local HTTP smoke contracts
         run: python3 tests/Integration/run-wave3-http-smoke.py
+      - name: Registration DTO and validation regression contracts
+        run: php tests/Unit/run-registration-tests.php
+      - name: Wave 4 OTP unit contracts
+        run: php tests/Unit/run-w4p3-unit.php
+      - name: Wave 4 email/Telegram adapter unit contracts
+        run: php tests/Unit/run-w4p4-unit.php
+      - name: Wave 4 recovery unit contracts
+        run: php tests/Unit/run-w4p5-unit.php
+      - name: Wave 4 password policy UI contract
+        run: node tests/Unit/run-w4p6b-password-policy-tests.mjs
+      - name: Pre-Wave 8 regression contracts
+        run: php tests/Unit/run-pre-wave8-bugfix-tests.php
+      - name: Wave 5 project creation and idempotency mock contracts
+        run: php tests/Unit/run-w5p1-project-creation-tests.php
 
   mariadb-integration:
     runs-on: ubuntu-latest
