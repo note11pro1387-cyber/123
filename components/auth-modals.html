@@ -1,391 +1,315 @@
 <!--
-  🧬 MR NEON ARCHITECTURE COMPONENT
-  📄 File: components/auth-modals.html
-  🎯 Responsibility: مودال‌های احراز هویت (ورود، ثبت‌نام، قوانین، فراموشی رمز)
-  🔌 Dependencies: css/components.css, js/auth.js (از طریق app.js)
-  🚫 Constraints: Do NOT change IDs or DOM structure. JS relies on them.
+  MR NEON — Authentication Experience
+  Contract: existing IDs and request fields are intentionally preserved.
+  Runtime: PHP includes this fragment; js/auth.js owns all interactions.
+  Styling: css/components.css; no inline styles or event handlers.
 -->
-<div id="authModal" class="auth-modal" hidden>
+
+<svg class="auth-icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <symbol id="auth-icon-mark" viewBox="0 0 48 48">
+    <path d="M24 3.5 43 14.4v19.2L24 44.5 5 33.6V14.4L24 3.5Z" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="m15 29 9-15 9 15M19 24h10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="auth-icon-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="auth-icon-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="auth-icon-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="auth-icon-eye-off" viewBox="0 0 24 24"><path d="m3 3 18 18M10.6 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 4.1M6.2 6.3C3.5 8.1 2 12 2 12s3.6 7 10 7c1.2 0 2.3-.2 3.3-.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+  <symbol id="auth-icon-phone" viewBox="0 0 24 24"><path d="M21 16.5v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 1.1 3.8 2 2 0 0 1 3.1 1.6h3a2 2 0 0 1 2 1.7l.5 2.7a2 2 0 0 1-.5 1.8L6.8 9.1a16 16 0 0 0 8.1 8.1l1.3-1.3a2 2 0 0 1 1.8-.5l2.7.5a2 2 0 0 1 1.7 2Z"/></symbol>
+  <symbol id="auth-icon-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m3 6 9 7 9-7"/></symbol>
+  <symbol id="auth-icon-telegram" viewBox="0 0 24 24"><path d="m22 2-7.1 20-4.1-8.8L2 9.1 22 2Z"/><path d="m10.8 13.2 5.1-5.1"/></symbol>
+  <symbol id="auth-icon-message" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z"/></symbol>
+  <symbol id="auth-icon-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="auth-icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  <symbol id="auth-icon-x" viewBox="0 0 24 24"><path d="m18 6-12 12M6 6l12 12"/></symbol>
+  <symbol id="auth-icon-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5m7 7-7-7 7-7"/></symbol>
+  <symbol id="auth-icon-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></symbol>
+  <symbol id="auth-icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="auth-icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 11v5m0-8h.01"/></symbol>
+  <symbol id="auth-icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="auth-icon-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 17 6l3 6M4 12l3 6a7 7 0 0 0 11.4-3"/></symbol>
+  <symbol id="auth-icon-spark" viewBox="0 0 24 24"><path d="m12 2 1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7L12 2Zm7 13 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></symbol>
+  <symbol id="auth-icon-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18m-11 0v2h4v-2"/></symbol>
+  <symbol id="auth-icon-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></symbol>
+  <symbol id="auth-icon-headset" viewBox="0 0 24 24"><path d="M3 13v-2a9 9 0 0 1 18 0v2M3 13h4v7H5a2 2 0 0 1-2-2v-5Zm18 0h-4v7h2a2 2 0 0 0 2-2v-5ZM17 20a5 5 0 0 1-5 2"/></symbol>
+</svg>
+
+<!-- Login -->
+<div id="authModal" class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" aria-hidden="true" hidden>
   <div class="auth-backdrop"></div>
-  <div class="auth-container">
-    <button class="auth-close" aria-label="بستن">×</button>
-    <div class="auth-header">
-      <h2>🔐 ورود به MR NEON</h2>
-      <p class="auth-subtitle">نام کاربری و رمز عبور خود را وارد کنید</p>
-    </div>
-    <form id="authForm" class="auth-form" autocomplete="off">
-      <div class="form-group">
-        <label for="authUsername">نام کاربری</label>
-        <div class="input-wrapper">
-          <span class="input-icon">👤</span>
-          <input
-            type="text"
-            id="authUsername"
-            name="username"
-            class="form-input"
-            placeholder="نام کاربری خود را وارد کنید"
-            required
-          />
+  <section class="auth-container" tabindex="-1">
+    <div class="auth-main">
+      <button type="button" class="auth-close" aria-label="بستن پنجره ورود"><svg aria-hidden="true"><use href="#auth-icon-x"/></svg></button>
+      <header class="auth-header">
+        <span class="auth-eyebrow">فضای اختصاصی مشتریان</span>
+        <h2 id="authModalTitle">خوش برگشتید</h2>
+        <p class="auth-subtitle">برای پیگیری پروژه‌ها و ادامه همکاری وارد حساب خود شوید.</p>
+      </header>
+      <form id="authForm" class="auth-form" autocomplete="on" novalidate>
+        <div class="form-group">
+          <label for="authUsername">نام کاربری</label>
+          <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true"><svg><use href="#auth-icon-user"/></svg></span>
+            <input type="text" id="authUsername" name="username" class="form-input" placeholder="نام کاربری حساب شما" autocomplete="username" required />
+          </div>
         </div>
-      </div>
-      <div class="form-group">
-        <label for="authPassword">رمز عبور</label>
-        <div class="input-wrapper">
-          <span class="input-icon">🔒</span>
-          <input
-            type="password"
-            id="authPassword"
-            name="password"
-            class="form-input"
-            placeholder="رمز عبور"
-            required
-          />
-          <button type="button" class="password-toggle" aria-label="نمایش رمز">
-            👁️
-          </button>
+        <div class="form-group">
+          <label for="authPassword">رمز عبور</label>
+          <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true"><svg><use href="#auth-icon-lock"/></svg></span>
+            <input type="password" id="authPassword" name="password" class="form-input" placeholder="رمز عبور" autocomplete="current-password" required />
+            <button type="button" class="password-toggle" aria-label="نمایش رمز عبور" aria-pressed="false" aria-controls="authPassword">
+              <svg class="icon-eye" aria-hidden="true"><use href="#auth-icon-eye"/></svg>
+              <svg class="icon-eye-off" aria-hidden="true"><use href="#auth-icon-eye-off"/></svg>
+            </button>
+          </div>
         </div>
+        <input type="checkbox" id="rememberMe" hidden aria-hidden="true" tabindex="-1" disabled />
+        <button type="submit" class="btn btn-primary btn-block auth-submit">
+          <span class="btn-text">ورود به فضای کاربری</span>
+          <span class="btn-loader" hidden><span class="loader-spinner"></span></span>
+        </button>
+      </form>
+      <div class="auth-divider" role="separator"><span>تازه به MR NEON پیوسته‌اید؟</span></div>
+      <div class="auth-actions">
+        <button type="button" id="showRegisterBtn" class="btn btn-outline-light btn-block">ساخت حساب کاربری</button>
+        <button type="button" id="showForgotPasswordBtn" class="btn-link">رمز عبور را فراموش کرده‌اید؟</button>
       </div>
-      <div class="checkbox-group">
-        <label class="checkbox-label">
-          <input type="checkbox" id="rememberMe" disabled aria-describedby="rememberMeHelp" />
-          <span>مرا به خاطر بسپار (فعلاً غیرفعال)</span>
-        </label>
-      </div>
-      <button type="submit" class="btn btn-primary btn-block">
-        <span class="btn-text">ورود به سیستم</span>
-        <span class="btn-loader" hidden
-          ><span class="loader-spinner"></span
-        ></span>
-      </button>
-    </form>
-    <div class="auth-divider"><span>یا</span></div>
-    <div class="auth-actions">
-      <button
-        type="button"
-        id="showRegisterBtn"
-        class="btn btn-outline-light btn-block"
-      >
-        📝 ثبت‌نام حساب جدید
-      </button>
-      <button type="button" id="showForgotPasswordBtn" class="btn-link">
-        🔑 رمز عبور خود را فراموش کرده‌اید؟
-      </button>
+      <p class="auth-privacy-note"><svg aria-hidden="true"><use href="#auth-icon-shield"/></svg><span>اطلاعات ورود شما فقط برای دسترسی به فضای اختصاصی حساب استفاده می‌شود.</span></p>
     </div>
-  </div>
+    <aside class="auth-aside" aria-label="امکانات فضای کاربری MR NEON">
+      <div class="auth-aside__top">
+        <span class="auth-brand-mark"><svg aria-hidden="true"><use href="#auth-icon-mark"/></svg></span>
+        <span class="auth-brand-name">MR<span>•</span>NEON</span>
+      </div>
+      <div class="auth-aside__visual" aria-hidden="true"><span class="auth-orbit auth-orbit--one"></span><span class="auth-orbit auth-orbit--two"></span><span class="auth-orbit-core"><svg><use href="#auth-icon-layers"/></svg></span></div>
+      <div class="auth-aside__copy">
+        <span class="auth-aside__eyebrow">از ایده تا اجرا</span>
+        <h3>مسیر پروژه‌تان<br />همیشه روشن است.</h3>
+        <p>از ثبت درخواست تا گفتگو با تیم و مشاهده مراحل انجام کار، همه‌چیز در فضای اختصاصی شما در دسترس است.</p>
+      </div>
+      <div class="auth-benefits">
+        <div class="auth-benefit"><svg aria-hidden="true"><use href="#auth-icon-briefcase"/></svg><span>مدیریت درخواست‌ها و پروژه‌ها</span></div>
+        <div class="auth-benefit"><svg aria-hidden="true"><use href="#auth-icon-layers"/></svg><span>مشاهده مرحله و پیشرفت کار</span></div>
+        <div class="auth-benefit"><svg aria-hidden="true"><use href="#auth-icon-headset"/></svg><span>ارتباط مستقیم با تیم MR NEON</span></div>
+      </div>
+      <span class="auth-aside__footnote">یک فضای منظم برای همکاری شفاف‌تر</span>
+    </aside>
+  </section>
 </div>
 
-<div
-  class="register-modal"
-  id="registerModal"
-  role="dialog"
-  aria-labelledby="registerTitle"
-  hidden
->
+<!-- Registration -->
+<div class="register-modal" id="registerModal" role="dialog" aria-modal="true" aria-labelledby="registerTitle" aria-hidden="true" hidden>
   <div class="register-backdrop"></div>
-  <div class="register-container">
-    <button class="register-close" aria-label="بستن">&times;</button>
-    <div class="register-header">
-      <h2 id="registerTitle">📝 ایجاد حساب کاربری</h2>
-      <p class="register-subtitle">اطلاعات خود را وارد کنید</p>
-    </div>
-    <form id="registerForm" class="register-form">
-      <div class="form-group">
-        <label for="regFullName"
-          >نام و نام خانوادگی <span class="required">*</span></label
-        >
-        <input
-          type="text"
-          id="regFullName"
-          name="fullName"
-          placeholder="مثال: علی رضایی"
-          required
-          minlength="3"
-          maxlength="100"
-        />
-        <span class="validation-message"></span>
-      </div>
-      <div class="form-group">
-        <label for="regPhone">شماره تلفن <span class="required">*</span></label>
-        <input
-          type="tel"
-          id="regPhone"
-          name="phone"
-          placeholder="09123456789 یا +989123456789"
-          required
-          pattern="[0-9۰-۹٠-٩ +().-]{7,32}"
-          maxlength="32"
-          autocomplete="tel"
-        />
-        <span class="validation-message"></span>
-        <span class="input-hint">شمارهٔ ایران پذیرفته می‌شود؛ سرور آن را به قالب استاندارد +989... تبدیل می‌کند.</span>
-      </div>
-      <div class="form-group">
-        <label for="regEmail"
-          >ایمیل <span class="optional-badge" id="regEmailRequirement">اختیاری</span></label
-        >
-        <input
-          type="email"
-          id="regEmail"
-          name="email"
-          placeholder="example@email.com"
-          autocomplete="email"
-          aria-required="false"
-          aria-describedby="regEmailRequirement regEmailHint"
-        />
-        <span class="validation-message"></span>
-        <span class="input-hint" id="regEmailHint">
-          با انتخاب Email اجباری می‌شود؛ در Telegram می‌تواند خالی بماند. واردکردن ایمیل به‌تنهایی به معنی تأیید آن نیست.
-        </span>
-      </div>
-      <div class="form-group" id="regVerificationChannelGroup">
-        <label>کانال تأیید حساب <span class="required">*</span></label>
-        <div class="verification-channel-options">
-          <label class="verification-channel-option">
-            <input type="radio" name="registrationChannel" value="telegram" required />
-            Telegram
-          </label>
-          <label class="verification-channel-option">
-            <input type="radio" name="registrationChannel" value="email" required />
-            Email
-          </label>
-          <label class="verification-channel-option verification-channel-option--disabled">
-            <input type="radio" name="registrationChannelDisabled" value="sms" disabled />
-            SMS (به‌زودی)
-          </label>
+  <section class="register-container" tabindex="-1">
+    <main class="register-main">
+      <button type="button" class="register-close" aria-label="بستن پنجره ثبت‌نام"><svg aria-hidden="true"><use href="#auth-icon-x"/></svg></button>
+      <header class="register-header">
+        <span class="auth-eyebrow">شروع همکاری با MR NEON</span>
+        <h2 id="registerTitle">حساب کاربری بسازید</h2>
+        <p class="register-subtitle">اطلاعات را در دو گام کوتاه وارد کنید؛ ادامه مسیر مرحله‌به‌مرحله انجام می‌شود.</p>
+      </header>
+
+      <div id="regWizardProgress" class="reg-wizard-progress" data-current-step="1" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="2" aria-label="مرحله ۱ از ۲">
+        <div class="reg-progress-track" aria-hidden="true"><span class="reg-progress-fill"></span></div>
+        <div class="reg-progress-stages">
+          <span class="reg-progress-stage is-current" data-reg-step="1"><span class="reg-progress-number">۱</span><span>اطلاعات شما</span></span>
+          <span class="reg-progress-stage" data-reg-step="2"><span class="reg-progress-number">۲</span><span>امنیت و تأیید</span></span>
         </div>
-        <span class="validation-message"></span>
-        <span class="input-hint">دقیقاً یک کانال فعال انتخاب کنید. در این مرحله هنوز کدی ارسال نمی‌شود.</span>
       </div>
-      <div class="form-group">
-        <label for="regUsername"
-          >نام کاربری <span class="required">*</span></label
-        >
-        <input
-          type="text"
-          id="regUsername"
-          name="username"
-          placeholder="مثال: ali_rezaei"
-          required
-          minlength="4"
-          maxlength="20"
-          pattern="[a-zA-Z0-9_]+"
-        />
-        <span class="validation-message"></span>
-        <span class="input-hint"
-          >۴-۲۰ کاراکتر، فقط حروف انگلیسی، اعداد و زیرخط (_) مجاز است</span
-        >
-      </div>
-      <div class="form-group">
-        <label for="regPassword"
-          >رمز عبور <span class="required">*</span></label
-        >
-        <div class="input-wrapper">
-          <input
-            type="password"
-            id="regPassword"
-            name="password"
-            placeholder="حداقل ۱۵ نویسهٔ Unicode"
-            autocomplete="new-password"
-            required
-            aria-describedby="regPasswordPolicyHint"
-          />
-          <button
-            type="button"
-            class="password-toggle"
-            aria-label="نمایش رمز عبور"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              aria-hidden="true"
-            >
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
+      <p id="regStepAnnounce" class="sr-only" aria-live="polite" aria-atomic="true">گام اول: اطلاعات شما</p>
+
+      <form id="registerForm" class="register-form" autocomplete="on" novalidate>
+        <section class="register-step-panel" data-register-step="1" aria-labelledby="regStep1Title">
+          <div class="register-step-heading">
+            <span class="register-step-kicker">گام ۰۱ / ۰۲</span>
+            <h3 id="regStep1Title">اول با شما آشنا شویم</h3>
+            <p>این اطلاعات برای ساخت حساب و هماهنگی پروژه استفاده می‌شود.</p>
+          </div>
+          <div class="reg-fields-grid">
+            <div class="form-group reg-field--wide">
+              <label for="regFullName">نام و نام خانوادگی <span class="required" aria-hidden="true">*</span></label>
+              <div class="input-wrapper"><span class="input-icon" aria-hidden="true"><svg><use href="#auth-icon-user"/></svg></span>
+                <input type="text" id="regFullName" name="fullName" class="form-input" placeholder="مثال: علی رضایی" required minlength="3" maxlength="160" autocomplete="name" aria-describedby="regFullNameHint regFullNameMsg" />
+              </div>
+              <span id="regFullNameHint" class="input-hint">نام کامل خود را وارد کنید.</span>
+              <span id="regFullNameMsg" class="validation-message" aria-live="polite"></span>
+            </div>
+            <div class="form-group">
+              <label for="regPhone">شماره موبایل <span class="required" aria-hidden="true">*</span></label>
+              <div class="input-wrapper"><span class="input-icon" aria-hidden="true"><svg><use href="#auth-icon-phone"/></svg></span>
+                <input type="tel" id="regPhone" name="phone" class="form-input" placeholder="09123456789" required pattern="[0-9۰-۹٠-٩]{11}" maxlength="11" autocomplete="tel-national" inputmode="numeric" dir="ltr" aria-describedby="regPhoneHint regPhoneMsg" />
+              </div>
+              <span id="regPhoneHint" class="input-hint">فقط ۱۱ رقم، با ۰۹؛ بدون کد کشور.</span>
+              <span id="regPhoneMsg" class="validation-message" aria-live="polite"></span>
+            </div>
+            <div class="form-group">
+              <label for="regUsername">نام کاربری <span class="required" aria-hidden="true">*</span></label>
+              <div class="input-wrapper"><span class="input-icon" aria-hidden="true"><svg><use href="#auth-icon-user"/></svg></span>
+                <input type="text" id="regUsername" name="username" class="form-input" placeholder="مثال: ali_rezaei" required minlength="4" maxlength="20" pattern="[a-zA-Z0-9_]+" autocomplete="username" inputmode="latin" dir="ltr" aria-describedby="regUsernameHint regUsernameMsg" />
+              </div>
+              <span id="regUsernameHint" class="input-hint">۴ تا ۲۰ حرف انگلیسی، عدد یا زیرخط.</span>
+              <span id="regUsernameMsg" class="validation-message" aria-live="polite"></span>
+            </div>
+          </div>
+          <div class="register-step-actions">
+            <button type="button" id="regStep1Next" class="btn btn-primary btn-block btn-lg">ادامه به گام بعدی<svg aria-hidden="true"><use href="#auth-icon-arrow-left"/></svg></button>
+            <button type="button" class="btn-link" data-close-register>انصراف</button>
+          </div>
+        </section>
+
+        <section class="register-step-panel" data-register-step="2" aria-labelledby="regStep2Title" hidden>
+          <div class="register-step-heading">
+            <span class="register-step-kicker">گام ۰۲ / ۰۲</span>
+            <h3 id="regStep2Title">امنیت حساب و روش تأیید</h3>
+            <p>رمز خود را تعیین و یک کانال فعال برای تأیید حساب انتخاب کنید.</p>
+          </div>
+          <div class="form-group">
+            <label for="regPassword">رمز عبور <span class="required" aria-hidden="true">*</span></label>
+            <div class="input-wrapper"><span class="input-icon" aria-hidden="true"><svg><use href="#auth-icon-lock"/></svg></span>
+              <input type="password" id="regPassword" name="password" class="form-input" placeholder="۸ تا ۱۵ نویسه" autocomplete="new-password" required aria-describedby="regPasswordPolicyHint" />
+              <button type="button" class="password-toggle" aria-label="نمایش رمز عبور" aria-pressed="false" aria-controls="regPassword"><svg class="icon-eye" aria-hidden="true"><use href="#auth-icon-eye"/></svg><svg class="icon-eye-off" aria-hidden="true"><use href="#auth-icon-eye-off"/></svg></button>
+            </div>
+            <span class="validation-message" aria-live="polite"></span>
+            <div class="password-meter-heading"><span>رعایت شرایط رمز عبور</span><span class="password-meter-value" id="regPasswordMeterValue">۰٪</span></div>
+            <div class="password-strength-meter" role="progressbar" aria-label="میزان رعایت شرایط رمز عبور" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="strength-bar strength-level-0"></div></div>
+            <div class="password-requirements" aria-label="شرایط اعتبار رمز عبور">
+              <div class="requirement is-pending" data-check="length"><span class="check-icon" aria-hidden="true"></span><span>۸ تا ۱۵ نویسه Unicode</span></div>
+              <div class="requirement is-pending" data-check="byteLimit"><span class="check-icon" aria-hidden="true"></span><span>حداکثر ۱۰۲۴ بایت UTF-8</span></div>
+              <div class="requirement is-pending" data-check="unicode"><span class="check-icon" aria-hidden="true"></span><span>رشته Unicode معتبر</span></div>
+              <div class="requirement is-pending" data-check="noControls"><span class="check-icon" aria-hidden="true"></span><span>بدون نویسه‌های کنترلی ASCII</span></div>
+            </div>
+            <span class="input-hint" id="regPasswordPolicyHint" aria-live="polite">طول بر اساس نویسه‌های Unicode و سقف بر اساس بایت UTF-8 محاسبه می‌شود.</span>
+          </div>
+          <div class="form-group">
+            <label for="regPasswordConfirm">تکرار رمز عبور <span class="required" aria-hidden="true">*</span></label>
+            <div class="input-wrapper"><span class="input-icon" aria-hidden="true"><svg><use href="#auth-icon-lock"/></svg></span>
+              <input type="password" id="regPasswordConfirm" name="passwordConfirm" class="form-input" placeholder="رمز را دوباره وارد کنید" autocomplete="new-password" required aria-describedby="regPasswordConfirmMsg" />
+              <button type="button" class="password-toggle" aria-label="نمایش رمز عبور" aria-pressed="false" aria-controls="regPasswordConfirm"><svg class="icon-eye" aria-hidden="true"><use href="#auth-icon-eye"/></svg><svg class="icon-eye-off" aria-hidden="true"><use href="#auth-icon-eye-off"/></svg></button>
+            </div>
+            <span id="regPasswordConfirmMsg" class="validation-message" aria-live="polite"></span>
+          </div>
+
+          <fieldset class="form-group channel-fieldset" id="regVerificationChannelGroup">
+            <legend>روش تأیید حساب <span class="required" aria-hidden="true">*</span></legend>
+            <div class="verification-channel-options">
+              <label class="verification-channel-option" data-channel="telegram">
+                <input type="radio" name="registrationChannel" value="telegram" required />
+                <span class="channel-option-icon"><svg aria-hidden="true"><use href="#auth-icon-telegram"/></svg></span>
+                <span class="channel-option-copy"><strong>تلگرام</strong><small>اتصال امن از طریق ربات رسمی</small></span>
+                <span class="channel-option-indicator" aria-hidden="true"><svg><use href="#auth-icon-check"/></svg></span>
+              </label>
+              <label class="verification-channel-option" data-channel="email">
+                <input type="radio" name="registrationChannel" value="email" required />
+                <span class="channel-option-icon"><svg aria-hidden="true"><use href="#auth-icon-mail"/></svg></span>
+                <span class="channel-option-copy"><strong>ایمیل</strong><small>ارسال کد به ایمیل شما</small></span>
+                <span class="channel-option-indicator" aria-hidden="true"><svg><use href="#auth-icon-check"/></svg></span>
+              </label>
+              <label class="verification-channel-option verification-channel-option--disabled" aria-disabled="true">
+                <input type="radio" name="registrationChannelDisabled" value="sms" disabled />
+                <span class="channel-option-icon"><svg aria-hidden="true"><use href="#auth-icon-message"/></svg></span>
+                <span class="channel-option-copy"><strong>پیامک</strong><small>به‌زودی فعال می‌شود</small></span>
+                <span class="channel-coming-soon">به‌زودی</span>
+              </label>
+            </div>
+            <span id="regChannelMsg" class="validation-message" aria-live="polite"></span>
+            <span class="input-hint">در حال حاضر فقط تلگرام و ایمیل پشتیبانی می‌شوند؛ پیامک هنوز فعال نیست.</span>
+          </fieldset>
+
+          <div id="regTelegramInfo" class="channel-explainer" hidden>
+            <span class="channel-explainer-icon"><svg aria-hidden="true"><use href="#auth-icon-shield"/></svg></span>
+            <div><strong>اتصال تلگرام پس از ثبت موقت</strong><p>در گام بعد لینک امن ربات نمایش داده می‌شود. برای حفظ امنیت، نام کاربری یا Chat ID تلگرام را اینجا وارد نکنید.</p></div>
+          </div>
+
+          <button type="button" id="regBackupToggle" class="backup-toggle" hidden aria-expanded="false" aria-controls="regEmailGroup">
+            <svg aria-hidden="true"><use href="#auth-icon-plus"/></svg><span>افزودن ایمیل پشتیبان</span>
           </button>
-        </div>
-        <span class="validation-message" aria-live="polite"></span>
-        <div class="password-strength-meter">
-          <div class="strength-bar"></div>
-        </div>
-        <div class="password-requirements" aria-label="شرایط اعتبار رمز عبور">
-          <div class="requirement" data-check="length">
-            <span class="check-icon">✗</span><span>حداقل ۱۵ نویسهٔ Unicode</span>
+          <div class="form-group reg-email-group" id="regEmailGroup" hidden>
+            <label for="regEmail"><span id="regEmailLabelText">ایمیل</span> <span class="optional-badge" id="regEmailRequirement">اختیاری</span></label>
+            <div class="input-wrapper"><span class="input-icon" aria-hidden="true"><svg><use href="#auth-icon-mail"/></svg></span>
+              <input type="email" id="regEmail" name="email" class="form-input" placeholder="name@example.com" autocomplete="email" aria-required="false" aria-describedby="regEmailHint regEmailMsg" />
+            </div>
+            <span id="regEmailHint" class="input-hint">اگر تلگرام را انتخاب کرده‌اید، این ایمیل فقط به‌صورت تأییدنشده ذخیره می‌شود و تا زمان تأیید جداگانه، روش بازیابی رمز نیست.</span>
+            <span id="regEmailMsg" class="validation-message" aria-live="polite"></span>
+            <button type="button" id="regBackupRemove" class="btn-link backup-remove">حذف ایمیل پشتیبان</button>
           </div>
-          <div class="requirement" data-check="byteLimit">
-            <span class="check-icon">✗</span><span>حداکثر ۱۰۲۴ بایت UTF-8</span>
+
+          <div class="form-group checkbox-group terms-consent-group">
+            <label class="checkbox-label"><input type="checkbox" id="agreeTerms" name="agreeTerms" required /><span class="checkbox-visual" aria-hidden="true"><svg><use href="#auth-icon-check"/></svg></span><span>با <a href="#" class="terms-link" id="termsLink">قوانین و مقررات</a> استفاده از خدمات MR NEON موافقم.</span></label>
+            <span id="agreeTermsMsg" class="validation-message" aria-live="polite"></span>
           </div>
-          <div class="requirement" data-check="unicode">
-            <span class="check-icon">✗</span><span>رشتهٔ Unicode معتبر</span>
+
+          <div class="register-step-actions">
+            <button type="button" id="regStep2Back" class="btn btn-outline"><svg aria-hidden="true"><use href="#auth-icon-arrow-right"/></svg>بازگشت به اطلاعات شما</button>
           </div>
-          <div class="requirement" data-check="noControls">
-            <span class="check-icon">✗</span><span>بدون نویسه‌های کنترلی ASCII</span>
-          </div>
+        </section>
+        <div id="regSubmitArea" class="register-submit-area" hidden>
+          <button type="submit" class="btn btn-primary btn-lg register-submit"><span class="btn-text">ثبت اطلاعات و ادامه</span><span class="btn-loader" hidden><span class="loader-spinner"></span></span></button>
         </div>
-        <span class="input-hint" id="regPasswordPolicyHint" aria-live="polite">
-          طول بر پایهٔ نویسه‌های Unicode و سقف بر پایهٔ بایت UTF-8 سنجیده می‌شود. فاصله‌های ابتدا و انتهای رمز حذف نمی‌شوند.
-        </span>
-      </div>
-      <div class="form-group">
-        <label for="regPasswordConfirm"
-          >تکرار رمز عبور <span class="required">*</span></label
-        >
-        <div class="input-wrapper">
-          <input
-            type="password"
-            id="regPasswordConfirm"
-            name="passwordConfirm"
-            placeholder="رمز عبور را دوباره وارد کنید"
-            required
-          />
-        </div>
-        <span class="validation-message"></span>
-      </div>
-      <div class="form-group checkbox-group">
-        <label class="checkbox-label">
-          <input type="checkbox" id="agreeTerms" name="agreeTerms" required />
-          <span class="checkmark"></span>
-          <span
-            >با
-            <a href="#" class="terms-link" id="termsLink">قوانین و مقررات</a>
-            سایت موافقم</span
-          >
-        </label>
-      </div>
-      <button type="submit" class="btn btn-primary btn-block btn-lg">
-        <span class="btn-text">ایجاد حساب کاربری</span>
-        <div class="btn-loader" hidden>
-          <div class="loader-spinner"></div>
-        </div>
-      </button>
-    </form>
-  </div>
+      </form>
+      <div class="register-footer">قبلاً حساب ساخته‌اید؟ <button type="button" id="switchToLoginBtn" class="btn-link">ورود به حساب</button></div>
+    </main>
+    <aside class="auth-aside auth-aside--register" aria-label="راهنمای ثبت‌نام">
+      <div class="auth-aside__top"><span class="auth-brand-mark"><svg aria-hidden="true"><use href="#auth-icon-mark"/></svg></span><span class="auth-brand-name">MR<span>•</span>NEON</span></div>
+      <div class="auth-aside__visual" aria-hidden="true"><span class="auth-orbit auth-orbit--one"></span><span class="auth-orbit auth-orbit--two"></span><span class="auth-orbit-core"><svg><use href="#auth-icon-spark"/></svg></span></div>
+      <div class="auth-aside__copy"><span class="auth-aside__eyebrow">شروعی دقیق، همکاری شفاف</span><h3>حساب شما،<br />مرکز مدیریت پروژه.</h3><p>با ساخت حساب می‌توانید درخواست‌ها را ثبت کنید و وضعیت مراحل اجرا را در یک فضای مشخص دنبال کنید.</p></div>
+      <div class="auth-benefits"><div class="auth-benefit"><svg aria-hidden="true"><use href="#auth-icon-check"/></svg><span>ثبت اطلاعات در چند گام ساده</span></div><div class="auth-benefit"><svg aria-hidden="true"><use href="#auth-icon-shield"/></svg><span>تأیید هویت از کانال انتخابی</span></div><div class="auth-benefit"><svg aria-hidden="true"><use href="#auth-icon-briefcase"/></svg><span>پیگیری پروژه پس از ورود</span></div></div>
+      <span class="auth-aside__footnote">اطلاعات حساس خود را فقط در فرم‌های رسمی سایت وارد کنید.</span>
+    </aside>
+  </section>
 </div>
 
-<!-- Terms and Conditions Modal -->
-<div
-  class="terms-modal"
-  id="termsModal"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="termsTitle"
-  hidden
->
+<!-- Terms -->
+<div class="terms-modal" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsTitle" aria-hidden="true" hidden>
   <div class="terms-backdrop"></div>
-  <div class="terms-container">
-    <div class="terms-header">
-      <h2 id="termsTitle">قوانین و مقررات</h2>
-      <button class="terms-close" aria-label="بستن">&times;</button>
-    </div>
-    <div class="terms-body">
-      <div class="terms-content">
-        <h3>۱. پذیرش شرایط</h3>
-        <p>با استفاده از خدمات MR NEON، شما شرایط و ضوابط زیر را می‌پذیرید.</p>
-        <h3>۲. خدمات</h3>
-        <p>
-          تمامی خدمات طراحی و توسعه وب‌سایت مطابق با توافقات انجام‌شده در
-          قرارداد ارائه می‌شود.
-        </p>
-        <h3>۳. حریم خصوصی</h3>
-        <p>
-          اطلاعات شخصی شما نزد MR NEON محفوظ بوده و به هیچ‌عنوان در اختیار شخص
-          ثالث قرار نمی‌گیرد.
-        </p>
-        <h3>۴. حق مالکیت</h3>
-        <p>
-          پس از تسویه کامل، کلیه حقوق مادی و معنوی وب‌سایت به کارفرما منتقل
-          می‌شود.
-        </p>
-        <h3>۵. لغو و استرداد</h3>
-        <p>
-          در صورت انصراف قبل از شروع طراحی، وجه پرداختی با کسر ۲۰٪ مسترد
-          می‌گردد.
-        </p>
-      </div>
-    </div>
-    <div class="terms-footer">
-      <button id="termsAcceptBtn" class="btn btn-primary">متوجه شدم</button>
-    </div>
-  </div>
+  <section class="terms-container" tabindex="-1">
+    <header class="terms-header"><div class="terms-heading-group"><span class="terms-header-icon"><svg aria-hidden="true"><use href="#auth-icon-shield"/></svg></span><div><span class="auth-eyebrow">MR NEON · راهنمای همکاری</span><h2 id="termsTitle">قوانین و مقررات استفاده از خدمات</h2></div></div><button type="button" class="terms-close" aria-label="بستن قوانین"><svg aria-hidden="true"><use href="#auth-icon-x"/></svg></button></header>
+    <div class="terms-body" tabindex="0" role="region" aria-label="متن قوانین و مقررات"><div class="terms-content">
+      <p class="terms-intro">این متن چارچوب عمومی استفاده از وب‌سایت، حساب کاربری و خدمات MR NEON را توضیح می‌دهد. جزئیات اختصاصی هر پروژه، از جمله محدوده کار، مبلغ، زمان‌بندی و شیوه تحویل، در پیشنهاد یا توافق جداگانه همان پروژه مشخص می‌شود.</p>
+      <section><h3>۱. پذیرش و دامنه استفاده</h3><p>با ایجاد حساب یا استفاده از بخش‌های اختصاصی MR NEON، تأیید می‌کنید اطلاعاتی را که وارد می‌کنید تا حد اطلاع شما درست و متعلق به خودتان است و از خدمات مطابق قوانین لازم‌الاجرا استفاده می‌کنید. در صورت نپذیرفتن این شرایط، ثبت‌نام را ادامه ندهید.</p></section>
+      <section><h3>۲. ماهیت خدمات و محدوده هر پروژه</h3><p>MR NEON در حوزه طراحی تجربه و رابط کاربری، طراحی و توسعه وب‌سایت و وب‌اپلیکیشن، مشاوره فنی و خدمات پشتیبانی مرتبط فعالیت می‌کند. امکانات، تحویل‌دادنی‌ها، فناوری‌ها، زمان‌بندی، تعداد بازبینی‌ها و موارد خارج از محدوده باید در پیشنهاد یا توافق همان پروژه روشن شود. درخواست ثبت‌شده به‌تنهایی به معنی پذیرش پروژه، شروع اجرا یا تضمین زمان تحویل نیست.</p></section>
+      <section><h3>۳. حساب کاربری و حفاظت از دسترسی</h3><p>مسئولیت نگهداری محرمانه نام کاربری و رمز عبور بر عهده شماست. رمز عبور یا کدهای یک‌بارمصرف را برای هیچ فردی ارسال نکنید. در صورت مشاهده فعالیت مشکوک یا از دست‌رفتن دسترسی، از مسیرهای ارتباطی اعلام‌شده در سایت با تیم MR NEON تماس بگیرید. حساب کاربری برای استفاده شخصی صاحب حساب است و نباید برای دور زدن محدودیت‌های دسترسی استفاده شود.</p></section>
+      <section><h3>۴. اطلاعات تماس و کانال‌های تأیید</h3><p>شماره موبایل برای اطلاعات تماس و هماهنگی دریافت می‌شود و در حال حاضر به‌دلیل فعال‌نبودن تأیید پیامکی، کانال تأیید یا بازیابی رمز محسوب نمی‌شود. کانال‌های فعال تأیید حساب در زمان ثبت‌نام تلگرام و ایمیل هستند. واردکردن ایمیل اختیاری در ثبت‌نام تلگرامی به‌تنهایی آن را تأیید نمی‌کند؛ تا زمان تأیید مستقل، نمی‌توان از آن برای بازیابی رمز استفاده کرد.</p></section>
+      <section><h3>۵. استفاده و نگهداری داده‌ها</h3><p>اطلاعات حساب و جزئیات پروژه برای ایجاد و مدیریت حساب، پیگیری درخواست، ارتباط درباره پروژه، امنیت سامانه و انجام تعهدات مورد توافق استفاده می‌شود. دسترسی به داده‌ها باید به افراد و سرویس‌هایی محدود باشد که برای ارائه و نگهداری خدمات به آن نیاز دارند. اطلاعات ممکن است در حدود لازم برای میزبانی، ارتباطات یا الزامات قانونی نزد ارائه‌دهندگان خدمات زیرساختی پردازش شود. از ارسال رمز عبور، اطلاعات بانکی یا داده‌های بسیار حساس در فرم‌های عمومی و گفت‌وگوهای پروژه خودداری کنید.</p></section>
+      <section><h3>۶. محتوا، مجوزها و مالکیت فکری</h3><p>شما مسئول هستید محتوایی را که برای استفاده در پروژه ارسال می‌کنید، با مجوز و حق استفاده لازم ارائه دهید و حقوق اشخاص دیگر را نقض نکنید. مالکیت، مجوز بهره‌برداری، فایل‌های منبع، اجزای دارای مجوز ثالث و زمان انتقال حقوق هر پروژه باید در پیشنهاد یا قرارداد همان پروژه مشخص شود؛ تحویل یا انتقال حقوق فراتر از موارد صریحاً توافق‌شده فرض نمی‌شود.</p></section>
+      <section><h3>۷. مبلغ، پرداخت، تغییر محدوده و انصراف</h3><p>هزینه، مراحل پرداخت، شرایط شروع، آثار تغییر درخواست، هزینه کار انجام‌شده، توقف یا انصراف از پروژه باید پیش از شروع در توافق اختصاصی مشخص شود. تغییرات خارج از محدوده اولیه ممکن است به برآورد هزینه یا زمان جدید نیاز داشته باشد. هیچ درصد ثابت، هزینه لغو یا وعده بازپرداختی جز آنچه در توافق همان پروژه درج شده، از این متن عمومی برداشت نمی‌شود.</p></section>
+      <section><h3>۸. تحویل، بازبینی و پشتیبانی</h3><p>معیار تحویل، شیوه اعلام ایراد، دوره بازبینی، رفع اشکال، آموزش، نگهداری و پشتیبانی باید در توافق پروژه تعیین شود. درخواست تغییر جدید با گزارش ایراد در تحویل یکسان نیست و ممکن است در محدوده خدمات پشتیبانی قرار نگیرد. وضعیت‌های نمایش‌داده‌شده در پنل برای اطلاع‌رسانی روند کار هستند و جایگزین توافق مکتوب پروژه نمی‌شوند.</p></section>
+      <section><h3>۹. دسترس‌پذیری و امنیت سامانه</h3><p>برای حفظ امنیت و پایداری، ممکن است به‌روزرسانی، نگهداری یا محدودیت موقت دسترسی لازم شود. با وجود تلاش برای ارائه سرویس پایدار، دسترسی بدون وقفه یا مصونیت مطلق از خطا و اختلال تضمین نمی‌شود. رخدادهای مهم مرتبط با دسترسی حساب باید از مسیر پشتیبانی گزارش شوند.</p></section>
+      <section><h3>۱۰. اصلاح شرایط و حل اختلاف</h3><p>در صورت تغییر مؤثر در شرایط استفاده، نسخه به‌روزشده از طریق وب‌سایت یا مسیر ارتباطی مناسب اطلاع‌رسانی می‌شود و در موارد لازم، پذیرش دوباره پیش از ادامه استفاده دریافت خواهد شد. توافق اختصاصی هر پروژه در موضوعات مالی، زمان‌بندی و تحویل ملاک عمل است. موضوعات حل‌نشده ابتدا از راه گفت‌وگو و بررسی مستندات پروژه پیگیری می‌شوند و حقوق قانونی طرفین محفوظ است.</p></section>
+      <p class="terms-note"><strong>یادآوری:</strong> این توضیحات عمومی جایگزین پیشنهاد، قرارداد اختصاصی پروژه یا مشاوره حقوقی نیست. پیش از پرداخت یا شروع هر پروژه، جزئیات اختصاصی آن را بررسی کنید.</p>
+    </div></div>
+    <footer class="terms-footer"><span>مطالعه این متن به‌تنهایی به معنی پذیرش نیست؛ موافقت با انتخاب گزینه داخل فرم ثبت‌نام ثبت می‌شود.</span><button type="button" id="termsAcceptBtn" class="btn btn-primary">بازگشت به ثبت‌نام</button></footer>
+  </section>
 </div>
 
-<div id="forgotPasswordModal" class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="forgotPasswordTitle" aria-hidden="true" hidden>
+<!-- Password recovery -->
+<div id="forgotPasswordModal" class="auth-modal forgot-password-modal" role="dialog" aria-modal="true" aria-labelledby="forgotPasswordTitle" aria-hidden="true" hidden>
   <div class="auth-backdrop"></div>
-  <div class="auth-container">
-    <button class="forgot-password-close auth-close" aria-label="بستن">×</button>
-    <div class="auth-header">
-      <h2 id="forgotPasswordTitle">🔑 بازیابی رمز عبور</h2>
-      <p class="auth-subtitle">با کانال تأییدشدهٔ متصل به حساب خود، رمز عبور را بازنشانی کنید.</p>
+  <section class="auth-container auth-container--recovery" tabindex="-1">
+    <div class="auth-main">
+      <button type="button" class="forgot-password-close auth-close" aria-label="بستن پنجره بازیابی"><svg aria-hidden="true"><use href="#auth-icon-x"/></svg></button>
+      <header class="auth-header"><span class="auth-eyebrow">بازیابی دسترسی</span><h2 id="forgotPasswordTitle">بازیابی رمز عبور</h2><p class="auth-subtitle">از یکی از کانال‌های تأییدشده متصل به حساب استفاده کنید.</p></header>
+      <div class="fp-progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3" aria-label="مرحله ۱ از ۳"><span class="reg-progress-dot is-current" data-fp-step-dot="1">۱</span><span class="reg-progress-line" aria-hidden="true"></span><span class="reg-progress-dot is-future" data-fp-step-dot="2">۲</span><span class="reg-progress-line" aria-hidden="true"></span><span class="reg-progress-dot is-future" data-fp-step-dot="3">۳</span></div>
+      <form id="forgotPasswordForm" class="auth-form" autocomplete="off" novalidate>
+        <div id="fpRequestSection" aria-hidden="false">
+          <div class="form-group"><label for="fpMethod">کانال بازیابی</label><select id="fpMethod" name="method" class="form-select"><option value="telegram">تلگرام</option><option value="email">ایمیل</option></select></div>
+          <div class="form-group"><label for="fpIdentifier" id="fpIdentifierLabel">نام کاربری MR NEON</label><div class="input-wrapper"><span class="input-icon" aria-hidden="true"><svg><use href="#auth-icon-user"/></svg></span><input type="text" id="fpIdentifier" name="identifier" class="form-input" placeholder="نام کاربری حساب MR NEON" autocomplete="username" maxlength="254" required /></div><span class="input-hint" id="fpIdentifierHint">نام کاربری حساب MR NEON را وارد کنید؛ مقصد تلگرام از کانال تأییدشده سمت سرور تعیین می‌شود.</span></div>
+          <p id="fpGenericInfo" class="input-hint" role="status" aria-live="polite" aria-atomic="true"></p>
+        </div>
+        <div id="fpCodeSection" aria-hidden="true" hidden>
+          <div class="recovery-code-intro"><span class="recovery-code-icon" aria-hidden="true"><svg><use href="#auth-icon-shield"/></svg></span><p id="fpCodeInfo" class="recovery-code-info" role="status" aria-live="polite">اگر اطلاعات با حسابی مطابقت داشته باشد، دستورالعمل ادامه ارسال می‌شود.</p></div>
+          <div class="form-group"><label for="fpCode">کد تأیید ۶ رقمی</label><input type="text" id="fpCode" name="code" class="form-input otp-input-segmented" placeholder="۰۰۰۰۰۰" dir="ltr" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" aria-describedby="fpCodeInfo fpStatus" /></div>
+          <button type="button" id="fpRestartFromCodeBtn" class="btn-link" data-fp-flow-control>تغییر روش یا شناسه بازیابی</button>
+        </div>
+        <div id="fpResetSection" aria-hidden="true" hidden>
+          <p class="input-hint" role="status">کد تأیید شد. رمز جدید را انتخاب کنید؛ این مرحله به‌تنهایی شما را وارد حساب نمی‌کند.</p>
+          <div class="form-group"><label for="fpNewPassword">رمز عبور جدید</label><div class="input-wrapper"><span class="input-icon" aria-hidden="true"><svg><use href="#auth-icon-lock"/></svg></span><input type="password" id="fpNewPassword" name="newPassword" class="form-input" placeholder="۸ تا ۱۵ نویسه" autocomplete="new-password" aria-describedby="fpPasswordPolicyHint fpStatus" /><button type="button" class="password-toggle" aria-label="نمایش رمز عبور" aria-pressed="false" aria-controls="fpNewPassword"><svg class="icon-eye" aria-hidden="true"><use href="#auth-icon-eye"/></svg><svg class="icon-eye-off" aria-hidden="true"><use href="#auth-icon-eye-off"/></svg></button></div><span class="input-hint" id="fpPasswordPolicyHint">۸ تا ۱۵ نویسه Unicode؛ محدودیت نهایی توسط سیاست امنیتی سرور بررسی می‌شود.</span></div>
+          <div class="form-group"><label for="fpConfirmPassword">تکرار رمز عبور جدید</label><div class="input-wrapper"><span class="input-icon" aria-hidden="true"><svg><use href="#auth-icon-lock"/></svg></span><input type="password" id="fpConfirmPassword" name="confirmPassword" class="form-input" placeholder="تکرار رمز عبور جدید" autocomplete="new-password" /><button type="button" class="password-toggle" aria-label="نمایش رمز عبور" aria-pressed="false" aria-controls="fpConfirmPassword"><svg class="icon-eye" aria-hidden="true"><use href="#auth-icon-eye"/></svg><svg class="icon-eye-off" aria-hidden="true"><use href="#auth-icon-eye-off"/></svg></button></div><button type="button" id="fpRestartFromResetBtn" class="btn-link" data-fp-flow-control>شروع دوباره بازیابی</button></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block recovery-submit-button"><span class="btn-text">ادامه بازیابی</span><span class="btn-loader" hidden><span class="loader-spinner"></span></span></button>
+        <p id="fpStatus" class="input-hint" role="status" aria-live="polite" aria-atomic="true"></p>
+      </form>
+      <div class="auth-actions auth-actions--recovery"><button type="button" id="fpBackToLoginBtn" class="btn-link">بازگشت به ورود</button></div>
     </div>
-    <form id="forgotPasswordForm" class="auth-form" autocomplete="off" novalidate>
-      <!-- Stage 1: account identifier + verified destination choice. -->
-      <div id="fpRequestSection" aria-hidden="false">
-        <div class="form-group">
-          <label for="fpMethod">روش بازیابی</label>
-          <select id="fpMethod" name="method" class="form-select">
-            <option value="telegram">💬 تلگرام</option>
-            <option value="email">📧 ایمیل</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="fpIdentifier" id="fpIdentifierLabel">نام کاربری MR NEON</label>
-          <input
-            type="text"
-            id="fpIdentifier"
-            name="identifier"
-            class="form-input"
-            placeholder="نام کاربری حساب MR NEON"
-            autocomplete="username"
-            maxlength="254"
-            required
-          />
-          <span class="input-hint" id="fpIdentifierHint">نام کاربری حساب MR NEON را وارد کنید؛ مقصد تلگرام از کانال تأییدشدهٔ سمت سرور تعیین می‌شود.</span>
-        </div>
-        <p id="fpGenericInfo" class="input-hint" role="status" aria-live="polite" aria-atomic="true"></p>
-      </div>
-
-      <!-- Stage 2: OTP only. Reset password is deliberately a separate request with reset-only authorization. -->
-      <div id="fpCodeSection" aria-hidden="true" hidden>
-        <div class="recovery-code-intro">
-          <div class="recovery-code-icon" aria-hidden="true">📨</div>
-          <p id="fpCodeInfo" class="recovery-code-info" role="status" aria-live="polite">
-            اگر اطلاعات با حسابی مطابقت داشته باشد، کد تأیید ارسال می‌شود.
-          </p>
-        </div>
-        <div class="form-group">
-          <label for="fpCode">کد ۶ رقمی</label>
-          <input type="text" id="fpCode" name="code" class="form-input recovery-code-input" placeholder="123456" dir="ltr" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" aria-describedby="fpCodeInfo fpStatus" />
-        <button type="button" id="fpRestartFromCodeBtn" class="btn-link" data-fp-flow-control>تغییر روش یا شناسهٔ بازیابی</button>
-        </div>
-      </div>
-
-      <!-- Stage 3: Reset-only token is held in JS memory and sent only in a request header. -->
-      <div id="fpResetSection" aria-hidden="true" hidden>
-        <p class="input-hint" role="status">کد تأیید شده است. رمز جدید را انتخاب کنید؛ این مرحله ورود به حساب ایجاد نمی‌کند.</p>
-        <div class="form-group">
-          <label for="fpNewPassword">رمز عبور جدید</label>
-          <input type="password" id="fpNewPassword" name="newPassword" class="form-input" placeholder="رمز عبور جدید" autocomplete="new-password" aria-describedby="fpPasswordPolicyHint fpStatus" />
-          <span class="input-hint" id="fpPasswordPolicyHint">حداقل ۱۵ کاراکتر Unicode؛ طول نهایی و الگوریتم رمزنگاری طبق سیاست امنیتی سرور بررسی می‌شود.</span>
-        </div>
-        <div class="form-group">
-          <label for="fpConfirmPassword">تکرار رمز عبور جدید</label>
-          <input type="password" id="fpConfirmPassword" name="confirmPassword" class="form-input" placeholder="تکرار رمز عبور جدید" autocomplete="new-password" aria-describedby="fpPasswordPolicyHint fpStatus" />
-          <button type="button" id="fpRestartFromResetBtn" class="btn-link" data-fp-flow-control>شروع دوبارهٔ بازیابی</button>
-        </div>
-      </div>
-
-      <button type="submit" class="btn btn-primary btn-block recovery-submit-button">
-        <span class="btn-text">📤 ادامهٔ بازیابی</span>
-        <span class="btn-loader" hidden><span class="loader-spinner"></span></span>
-      </button>
-      <p id="fpStatus" class="input-hint" role="status" aria-live="polite" aria-atomic="true"></p>
-    </form>
-    <div class="auth-actions auth-actions--recovery">
-      <button type="button" id="fpBackToLoginBtn" class="btn-link">↩️ بازگشت به صفحه ورود</button>
-    </div>
-  </div>
+    <aside class="auth-aside auth-aside--recovery" aria-label="راهنمای امنیت بازیابی"><div class="auth-aside__top"><span class="auth-brand-mark"><svg aria-hidden="true"><use href="#auth-icon-mark"/></svg></span><span class="auth-brand-name">MR<span>•</span>NEON</span></div><div class="auth-aside__visual" aria-hidden="true"><span class="auth-orbit auth-orbit--one"></span><span class="auth-orbit auth-orbit--two"></span><span class="auth-orbit-core"><svg><use href="#auth-icon-shield"/></svg></span></div><div class="auth-aside__copy"><span class="auth-aside__eyebrow">دسترسی امن</span><h3>حساب شما،<br />با تأیید مالکیت.</h3><p>کد بازیابی فقط از کانال تأییدشده حساب بررسی می‌شود. پس از تعیین رمز جدید، برای ورود دوباره به صفحه ورود بازمی‌گردید.</p></div><div class="auth-benefits"><div class="auth-benefit"><svg aria-hidden="true"><use href="#auth-icon-lock"/></svg><span>کد یک‌بارمصرف با مهلت محدود</span></div><div class="auth-benefit"><svg aria-hidden="true"><use href="#auth-icon-shield"/></svg><span>مجوز بازنشانی جدا از نشست ورود</span></div></div><span class="auth-aside__footnote">هیچ‌گاه کد تأیید را در اختیار دیگران نگذارید.</span></aside>
+  </section>
 </div>

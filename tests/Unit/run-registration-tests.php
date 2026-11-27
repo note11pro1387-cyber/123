@@ -53,7 +53,7 @@ $validTelegram = [
     'fullName' => 'کاربر آزمایشی',
     'username' => 'Synthetic_User',
     'phone' => '۰۹۱۲۱۲۳۴۵۶۷',
-    'password' => 'correct horse battery staple',
+    'password' => 'Neon2026',
     'email' => 'Optional@Example.invalid',
     'selectedChannel' => 'telegram',
     'termsAccepted' => true,
@@ -64,14 +64,14 @@ $assert($dto->usernameNormalized === 'synthetic_user', 'DTO exposes canonical us
 $assert($dto->email === 'optional@example.invalid', 'DTO canonicalizes optional email');
 $assert($dto->selectedChannel === 'telegram' && $dto->termsAccepted, 'DTO preserves channel and consent state');
 $serialized = json_encode($dto, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-$assert(!str_contains($serialized, 'correct horse battery staple') && !str_contains($serialized, 'password'), 'DTO serialization never exposes raw password or field');
+$assert(!str_contains($serialized, 'Neon2026') && !str_contains($serialized, 'password'), 'DTO serialization never exposes raw password or field');
 $assert(!property_exists($dto, 'password'), 'raw password is not a public DTO property');
 $nativeSerialized = serialize($dto);
-$assert(!str_contains($nativeSerialized, 'correct horse battery staple') && !str_contains($nativeSerialized, 'rawPassword'), 'PHP native serialization excludes password material');
+$assert(!str_contains($nativeSerialized, 'Neon2026') && !str_contains($nativeSerialized, 'rawPassword'), 'PHP native serialization excludes password material');
 ob_start();
 var_dump($dto);
 $debugDump = (string) ob_get_clean();
-$assert(!str_contains($debugDump, 'correct horse battery staple') && !str_contains($debugDump, 'rawPassword'), 'debug dumps exclude password material');
+$assert(!str_contains($debugDump, 'Neon2026') && !str_contains($debugDump, 'rawPassword'), 'debug dumps exclude password material');
 
 $emailDto = RegistrationDTO::fromArray(array_merge($validTelegram, [
     'email' => 'Selected@Example.invalid',
@@ -90,7 +90,7 @@ $expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTeleg
 $expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTelegram, ['isVerified' => true])), 'UNEXPECTED_REGISTRATION_FIELDS', 'client verification state rejected');
 $expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTelegram, ['termsAccepted' => 'true'])), 'TERMS_ACCEPTANCE_REQUIRED', 'non-boolean terms acceptance rejected');
 $expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTelegram, ['termsAccepted' => false])), 'TERMS_ACCEPTANCE_REQUIRED', 'missing consent rejected');
-$expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTelegram, ['password' => '12345678901234'])), 'PASSWORD_POLICY_VIOLATION', '14-character password rejected');
+$expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTelegram, ['password' => '1234567890123456'])), 'PASSWORD_POLICY_VIOLATION', '16-character password rejected');
 $expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTelegram, ['password' => str_repeat('a', 1025)])), 'PASSWORD_POLICY_VIOLATION', 'oversized password rejected');
 $expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTelegram, ['fullName' => str_repeat('ن', 161)])), 'FULL_NAME_INVALID', 'oversized name rejected');
 $expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTelegram, ['fullName' => '  '])), 'FULL_NAME_INVALID', 'empty name rejected');
@@ -99,11 +99,11 @@ $expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTeleg
 $expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTelegram, ['username' => str_repeat('a', 21)])), 'USERNAME_INVALID', 'oversized username rejected');
 $expectProblem(static fn() => RegistrationDTO::fromArray(array_merge($validTelegram, ['email' => true])), 'EMAIL_INVALID', 'boolean email rejected');
 
-PasswordPolicy::validate('correct horse battery staple');
-$hash = PasswordPolicy::hash('correct horse battery staple');
-$assert(password_verify('correct horse battery staple', $hash), 'central policy hash verifies');
+PasswordPolicy::validate('Neon2026');
+$hash = PasswordPolicy::hash('Neon2026');
+$assert(password_verify('Neon2026', $hash), 'central policy hash verifies');
 $assert(password_get_info($hash)['algoName'] !== 'unknown', 'central policy produces recognized password hash');
-$spacePassword = ' ' . 'correct horse battery staple' . ' ';
+$spacePassword = ' ' . 'Neon2026' . ' ';
 $spaceHash = PasswordPolicy::hash($spacePassword);
 $assert(password_verify($spacePassword, $spaceHash) && !password_verify(trim($spacePassword), $spaceHash), 'password whitespace is preserved and never silently trimmed');
 $expectProblem(static fn() => PasswordPolicy::validate("correct horse battery staple\n"), 'PASSWORD_POLICY_VIOLATION', 'ASCII control characters are rejected');

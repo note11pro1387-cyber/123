@@ -60,7 +60,7 @@ check("DTO rejects unknown/privileged keys", "UNEXPECTED_REGISTRATION_FIELDS" in
 check("password omitted from DTO serialization", "public function jsonSerialize()" in dto and "'password' =>" not in dto)
 check("canonical phone parser translates Persian and Arabic digits", "'۰' => '0'" in phone and "'٠' => '0'" in phone)
 check("phone parser rejects unexpected characters rather than stripping all punctuation", "preg_match('/^\\+?[0-9]+$/D'" in phone)
-check("password policy is centrally defined at 15 Unicode characters", "MIN_CHARACTERS = 15" in password and "preg_match_all('/./us'" in password)
+check("password policy is centrally defined at 8–15 Unicode characters", "MIN_CHARACTERS = 8" in password and "MAX_CHARACTERS = 15" in password and "preg_match_all('/./us'" in password)
 check("Terms version is server-owned and fails closed", "MRNEON_TERMS_VERSION" in policy and "TERMS_POLICY_UNAVAILABLE" in policy)
 check("attempt TTL is centralized and distinct from OTP TTL", "DEFAULT_ATTEMPT_TTL_SECONDS = 1800" in policy and "120-second OTP TTL" in policy)
 check("service uses Wave 2 DB-backed rate limits", "RateLimitMiddleware::enforce(" in service and "enforceRegistrationIdentities" in service)

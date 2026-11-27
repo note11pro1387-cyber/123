@@ -3,7 +3,8 @@
  * The server remains authoritative; this module only keeps first-party UI hints aligned.
  */
 export const REGISTRATION_PASSWORD_POLICY = Object.freeze({
-  minCharacters: 15,
+  minCharacters: 8,
+  maxCharacters: 15,
   maxUtf8Bytes: 1024,
 });
 
@@ -31,8 +32,9 @@ export function inspectRegistrationPassword(value) {
   const hasNoControlCharacters = !/[\u0000-\u001F\u007F]/.test(password);
   const errors = [];
 
-  if (password.length === 0 || characterCount < REGISTRATION_PASSWORD_POLICY.minCharacters) {
-    errors.push("رمز عبور باید دست‌کم ۱۵ نویسهٔ Unicode داشته باشد.");
+  if (password.length === 0 || characterCount < REGISTRATION_PASSWORD_POLICY.minCharacters
+    || characterCount > REGISTRATION_PASSWORD_POLICY.maxCharacters) {
+    errors.push("رمز عبور باید بین ۸ تا ۱۵ نویسهٔ Unicode داشته باشد.");
   }
   if (!validUnicode) errors.push("رمز عبور شامل توالی نامعتبر Unicode است.");
   if (!withinByteLimit) errors.push("رمز عبور از سقف ۱۰۲۴ بایت UTF-8 بیشتر است.");

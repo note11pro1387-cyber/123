@@ -4,7 +4,8 @@ declare(strict_types=1);
 /** Single server-owned password policy for newly created accounts. Login compatibility is unchanged. */
 final class PasswordPolicy
 {
-    public const MIN_CHARACTERS = 15;
+    public const MIN_CHARACTERS = 8;
+    public const MAX_CHARACTERS = 15;
     public const MAX_BYTES = 1024;
     public const BCRYPT_MAX_BYTES = 72;
 
@@ -17,7 +18,9 @@ final class PasswordPolicy
             throw self::invalidPassword();
         }
         $characters = preg_match_all('/./us', $password);
-        if (!is_int($characters) || $characters < self::MIN_CHARACTERS) {
+        if (!is_int($characters)
+            || $characters < self::MIN_CHARACTERS
+            || $characters > self::MAX_CHARACTERS) {
             throw self::invalidPassword();
         }
 
@@ -45,6 +48,6 @@ final class PasswordPolicy
 
     private static function invalidPassword(): ApiProblemException
     {
-        return new ApiProblemException(422, 'PASSWORD_POLICY_VIOLATION', 'Unprocessable content', 'رمز عبور باید دست‌کم ۱۵ کاراکتر داشته باشد و از محدودیت طول مجاز بیشتر نباشد.');
+        return new ApiProblemException(422, 'PASSWORD_POLICY_VIOLATION', 'Unprocessable content', 'رمز عبور باید بین ۸ تا ۱۵ نویسهٔ Unicode داشته باشد؛ حداکثر طول UTF-8 برابر ۱۰۲۴ بایت است و نویسه‌های کنترلی ASCII مجاز نیستند.');
     }
 }

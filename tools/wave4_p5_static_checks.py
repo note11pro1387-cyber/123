@@ -74,7 +74,7 @@ check("RecoveryController())->dispatch($action)" in route and "'resetPassword' =
 check("findVerifiedRecoveryTarget" in users and "c.is_verified = 1" in users and "provider_subject_id" in users and "hash_equals($destination, (string) $row['provider_subject_id'])" in users and "c.provider_subject_id = c.channel_value" in users, "only verified Email/Telegram channel bindings with consistent private Telegram IDs can recover an active account")
 check("!in_array($method, ['email', 'telegram'], true)" in service and "RecoveryService::normalizeIdentifier('sms'" in unit, "SMS is not an accepted Recovery method")
 check("X-Reset-Authorization" in js and "this.resetAuthorizationToken = token" in js and "clearSensitiveFlow" in js, "UI keeps reset-only token in memory and clears it on flow completion/close")
-check("minimum 15" in modal.lower() or "حداقل ۱۵ کاراکتر" in modal, "Recovery UI communicates the central 15-character password policy")
+check("۸ تا ۱۵ نویسه" in modal, "Recovery UI communicates the central 8–15 character password policy")
 check("MRNEON_ALLOW_W4P5_TEST_MUTATION" in integration and "pdo_mysql is unavailable" in integration and "SELECT DATABASE()" in integration, "DB integration test is opt-in, local-test-schema guarded and confirms database identity")
 check("DROP DATABASE" not in integration.upper() and "TRUNCATE " not in integration.upper(), "integration test performs no database drop or truncate")
 check("PASS W4-P5 Unit" in unit and "OTP خام" not in service, "dedicated unit test exists and service does not emit raw OTP through explicit logging")

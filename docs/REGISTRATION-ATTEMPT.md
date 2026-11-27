@@ -21,7 +21,7 @@ Required keys:
 | `fullName` | string | Trimmed, UTF-8, 3–160 Unicode characters, no control characters |
 | `username` | string | 4–20 ASCII letters/digits/underscore; edge whitespace is trimmed; comparison uses lowercase canonical form |
 | `phone` | string | Required Iranian mobile; normalized to `+989` followed by nine digits |
-| `password` | string | Server-only raw input used for hashing; minimum 15 Unicode characters; maximum 1024 bytes; never serialized/logged |
+| `password` | string | Server-only raw input used for hashing; minimum 8 and maximum 15 Unicode characters; maximum 1024 UTF-8 bytes; never serialized/logged |
 | `selectedChannel` | string | Exactly `telegram` or `email`; SMS and any other value are rejected |
 | `termsAccepted` | boolean | Must be boolean `true`; strings such as `"true"` are invalid |
 
@@ -42,7 +42,7 @@ All unknown fields are rejected. In particular, `role`, `userId`, `isAdmin`, `is
 
 ## Password policy and hashing
 
-`PasswordPolicy` is the sole server-owned policy for new registration. Minimum 15 Unicode characters, max 1024 bytes, valid UTF-8 and no ASCII control characters, including line breaks. No trimming or truncation occurs. Argon2id is selected when available; otherwise the standard PHP password algorithm is used, and a runtime using bcrypt fallback rejects values over 72 bytes to avoid silent truncation. Existing account login policy/verification is untouched by this part.
+`PasswordPolicy` is the sole server-owned policy for new registration. Minimum 8 and maximum 15 Unicode code points, max 1024 UTF-8 bytes, valid UTF-8 and no ASCII control characters, including line breaks. No trimming or truncation occurs. Argon2id is selected when available; otherwise the standard PHP password algorithm is used, and a runtime using bcrypt fallback rejects values over 72 bytes to avoid silent truncation. Existing account login policy/verification is untouched by this part.
 
 ## Server-owned Terms and lifetime
 

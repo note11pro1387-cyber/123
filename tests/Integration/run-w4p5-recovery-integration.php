@@ -78,12 +78,12 @@ try {
     }
 
     $oldPassword = 'synthetic legacy password for tests';
-    $newPassword = 'synthetic new password chosen for test';
+    $newPassword = 'Neon2026';
     $created = (new UserRepository($pdo))->create([
         'full_name' => 'W4P5 Synthetic Recovery Test',
         'username' => $username,
         'phone' => $phone,
-        'password_hash' => PasswordPolicy::hash($oldPassword),
+        'password_hash' => password_hash($oldPassword, PASSWORD_DEFAULT),
         'account_status' => 'active',
     ]);
     $userId = (int) $created['id'];
@@ -144,7 +144,7 @@ try {
     $assert(is_array($finalChallenge) && ($finalChallenge['state'] ?? null) === 'used' && $finalChallenge['recovery_used_at'] !== null, 'reset-only token is atomically consumed');
 
     try {
-        $service->resetPassword($tokenRaw, ['newPassword' => 'another synthetic valid recovery password'], $testIp);
+        $service->resetPassword($tokenRaw, ['newPassword' => 'Another2026'], $testIp);
         $assert(false, 'Reset-only token must not replay');
     } catch (ApiProblemException $exception) {
         $assert($exception->errorCode === 'RESET_AUTHORIZATION_INVALID_OR_EXPIRED', 'replay returns generic invalid/expired error');

@@ -56,6 +56,8 @@ export class AuthSystem {
     this.modal = DOM.authModal;
     this.form = DOM.authForm;
     this.notification = window.notificationSystem;
+    this.previousFocus = null;
+    this._keyHandler = (event) => this.handleModalKeydown(event);
     this.init();
   }
 
@@ -64,122 +66,169 @@ export class AuthSystem {
     this.setupEventListeners();
   }
 
-  setupEventListeners() {
-    this.form.addEventListener("submit", (e) => this.handleLogin(e));
-
-    document
-      .getElementById("showRegisterBtn")
-      ?.addEventListener("click", () => {
-        this.close();
-        setTimeout(() => window.registrationSystem?.open(), 300);
-      });
-
-    document
-      .getElementById("showForgotPasswordBtn")
-      ?.addEventListener("click", () => {
-        this.close();
-        setTimeout(() => window.forgotPasswordSystem?.open(), 300);
-      });
-
-    this.modal
-      .querySelector(".auth-close")
-      ?.addEventListener("click", () => this.close());
-    this.modal
-      .querySelector(".auth-backdrop")
-      ?.addEventListener("click", () => this.close());
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.modal.classList.contains("active"))
-        this.close();
-    });
-
-    const pwdToggle = this.modal.querySelector(".password-toggle");
-    const pwdInput = document.getElementById("authPassword");
-    pwdToggle?.addEventListener("click", () => {
-      pwdInput.type = pwdInput.type === "password" ? "text" : "password";
-    });
+  getFocusable(container) {
+    if (!container) return [];
+    return Array.from(container.querySelectorAll([
+      'a[href]:not([disabled])',
+      'button:not([disabled])',
+      'input:not([disabled]):not([type="hidden"])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(','))).filter((element) =>
+      !element.closest('[hidden]')
+      && element.getAttribute('aria-hidden') !== 'true'
+      && element.getClientRects().length > 0
+    );
   }
 
-  async handleLogin(e) {
-    e.preventDefault();
-    const username = document.getElementById("authUsername").value.trim();
-    const password = document.getElementById("authPassword").value;
-    const remember = document.getElementById("rememberMe").checked;
+  setupEventListeners() {
+    this.form.addEventListener('submit', (event) => this.handleLogin(event));
+    document.getElementById('showRegisterBtn')?.addEventListener('click', () => {
+      this.close();
+      setTimeout(() => window.registrationSystem?.open(), 250);
+    });
+    document.getElementById('showForgotPasswordBtn')?.addEventListener('click', () => {
+      this.close();
+      setTimeout(() => window.forgotPasswordSystem?.open(), 250);
+    });
+    this.modal.querySelector('.auth-close')?.addEventListener('click', () => this.close());
+    this.modal.querySelector('.auth-backdrop')?.addEventListener('click', () => this.close());
+    this.modal.addEventListener('click', (event) => {
+      const toggle = event.target.closest('.password-toggle');
+      if (!toggle || !this.modal.contains(toggle)) return;
+      const input = document.getElementById(toggle.getAttribute('aria-controls') || 'authPassword');
+      if (!input) return;
+      const reveal = input.type === 'password';
+      input.type = reveal ? 'text' : 'password';
+      toggle.classList.toggle('is-revealing', reveal);
+      toggle.setAttribute('aria-pressed', reveal ? 'true' : 'false');
+      toggle.setAttribute('aria-label', reveal ? 'پنهان کردن رمز عبور' : 'نمایش رمز عبور');
+    });
+    document.addEventListener('keydown', this._keyHandler, true);
+  }
 
-    if (!username || !password) {
-      this.notification?.error("نام کاربری و رمز عبور الزامی است");
+  handleModalKeydown(event) {
+    if (!this.modal?.classList.contains('active')) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.close();
       return;
     }
+    if (event.key !== 'Tab') return;
+    const focusable = this.getFocusable(this.modal);
+    if (!focusable.length) {
+      event.preventDefault();
+      this.modal.querySelector('.auth-container')?.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && (document.activeElement === first || !this.modal.contains(document.activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !this.modal.contains(document.activeElement))) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 
-    const submitBtn = this.form.querySelector('button[type="submit"]');
-    const btnText = submitBtn.querySelector(".btn-text");
-    const btnLoader = submitBtn.querySelector(".btn-loader");
-    submitBtn.disabled = true;
-    if (btnText) btnText.closest("button")?.classList.add("is-submitting");
-    if (btnLoader) btnLoader.removeAttribute("hidden");
-
+  async handleLogin(event) {
+    event.preventDefault();
+    const username = document.getElementById('authUsername')?.value.trim() || '';
+    const password = document.getElementById('authPassword')?.value || '';
+    const remember = document.getElementById('rememberMe')?.checked === true;
+    if (!username || !password) {
+      this.notification?.error('نام کاربری و رمز عبور الزامی است.');
+      return;
+    }
+    const submit = this.form.querySelector('button[type="submit"]');
+    if (!submit) return;
+    const text = submit.querySelector('.btn-text');
+    const loader = submit.querySelector('.btn-loader');
+    submit.disabled = true;
+    submit.classList.add('is-submitting');
+    if (loader) loader.removeAttribute('hidden');
     try {
-      // User authentication never falls back to the independent Admin role.
       await this.loginUser(username, password, remember);
       this.close();
-    } catch (err) {
-      this.notification?.error(err.message || "ورود در حال حاضر امکان‌پذیر نیست");
+    } catch (error) {
+      this.notification?.error(error?.message || 'ورود در حال حاضر امکان‌پذیر نیست.');
     } finally {
-      submitBtn.disabled = false;
-      if (btnText) btnText.closest("button")?.classList.remove("is-submitting");
-      if (btnLoader) btnLoader.setAttribute("hidden", "");
+      submit.disabled = false;
+      submit.classList.remove('is-submitting');
+      if (loader) loader.setAttribute('hidden', '');
+      if (text) text.textContent = 'ورود به فضای کاربری';
     }
   }
 
   async loginUser(username, password, remember) {
-    const data = await apiRequest("login", {
-      method: "POST",
+    const data = await apiRequest('login', {
+      method: 'POST',
       body: { username, password },
     });
     AuthSystem.applyServerSession(data);
-    if (remember) {
-      this.notification?.info("ورود امن انجام شد؛ گزینهٔ ماندگاری نشست در این نسخه فعال نیست.");
-    }
-    this.notification?.success(`خوش آمدید ${data.user?.fullName || username} 🎉`);
+    if (remember) this.notification?.info('گزینهٔ ماندگاری نشست در این نسخه فعال نیست.');
+    this.notification?.success(`خوش آمدید ${data.user?.fullName || username}.`);
     setTimeout(() => window.userPanel?.openPanel(), 500);
   }
 
   async open() {
     let existingSession = AuthSystem.checkSession();
-    if (!AuthSystem.sessionChecked) {
-      existingSession = await AuthSystem.restoreSession();
-    }
+    if (!AuthSystem.sessionChecked) existingSession = await AuthSystem.restoreSession();
     if (existingSession) {
-      if (existingSession.type === "admin") {
+      if (existingSession.type === 'admin') {
         try {
           const adminPanel = await ensureAdminPanel();
           await adminPanel.openPanel();
         } catch {
-          this.notification?.error("بارگذاری فضای مدیریت ناموفق بود؛ دوباره تلاش کنید.");
+          this.notification?.error('بارگذاری فضای مدیریت ناموفق بود؛ دوباره تلاش کنید.');
         }
       } else {
         window.userPanel?.openPanel();
       }
       return;
     }
-
+    if (!this.modal) return;
+    if (!this.modal.classList.contains('active')) {
+      this.previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
     this.clearFields();
-    this.modal.classList.add("active");
-    this.modal.removeAttribute("hidden");
+    this.modal.classList.add('active');
+    this.modal.removeAttribute('hidden');
+    this.modal.setAttribute('aria-hidden', 'false');
     syncSharedModalScrollLock();
-    setTimeout(() => document.getElementById("authUsername")?.focus(), 300);
+    setTimeout(() => {
+      if (this.modal?.classList.contains('active')) document.getElementById('authUsername')?.focus();
+    }, 80);
   }
 
   close() {
-    this.modal.classList.remove("active");
-    this.modal.setAttribute("hidden", "");
+    if (!this.modal) return;
+    this.modal.classList.remove('active');
+    this.modal.setAttribute('hidden', '');
+    this.modal.setAttribute('aria-hidden', 'true');
     syncSharedModalScrollLock();
     this.clearFields();
+    const target = this.previousFocus;
+    this.previousFocus = null;
+    if (target?.isConnected && target.getClientRects().length > 0) {
+      setTimeout(() => {
+        try { target.focus({ preventScroll: true }); } catch { target.focus(); }
+      }, 0);
+    }
   }
 
   clearFields() {
-    document.getElementById("authUsername").value = "";
-    document.getElementById("authPassword").value = "";
+    const username = document.getElementById('authUsername');
+    const password = document.getElementById('authPassword');
+    if (username) username.value = '';
+    if (password) { password.value = ''; password.type = 'password'; }
+    this.modal?.querySelectorAll('.password-toggle').forEach((toggle) => {
+      toggle.classList.remove('is-revealing');
+      toggle.setAttribute('aria-pressed', 'false');
+      toggle.setAttribute('aria-label', 'نمایش رمز عبور');
+    });
   }
 
   static currentSession = null;
@@ -303,6 +352,10 @@ export class RegistrationSystem {
     this.pendingTelegramLinkUrl = null;
     this.telegramLinked = false;
     this.draftKey = "registration_draft";
+    this.visualStep = 1;
+    this.backupEmailVisible = false;
+    this.previousFocus = null;
+    this._keyHandler = (event) => this._handleModalKeydown(event);
     this.init();
   }
 
@@ -313,6 +366,22 @@ export class RegistrationSystem {
 
   setupEvents() {
     this.form.addEventListener("submit", (e) => this.handleSubmit(e));
+    document.getElementById("regStep1Next")?.addEventListener("click", () => this._handleStep1Next());
+    document.getElementById("regStep2Back")?.addEventListener("click", () => this.setVisualStep(1, true));
+    document.getElementById("regBackupToggle")?.addEventListener("click", () => {
+      this.backupEmailVisible = !this.backupEmailVisible;
+      this.syncChannelRequirements();
+      if (this.backupEmailVisible) document.getElementById("regEmail")?.focus();
+      this.saveDraft();
+    });
+    document.getElementById("regBackupRemove")?.addEventListener("click", () => {
+      const email = document.getElementById("regEmail");
+      if (email) { email.value = ""; this.clearValidation(email); }
+      this.backupEmailVisible = false;
+      this.syncChannelRequirements();
+      this.saveDraft();
+    });
+    document.addEventListener("keydown", this._keyHandler, true);
 
     // دکمه بستن
     this.modal
@@ -321,6 +390,9 @@ export class RegistrationSystem {
     this.modal
       .querySelector(".register-backdrop")
       ?.addEventListener("click", () => this.close());
+    this.modal.querySelectorAll("[data-close-register]").forEach((button) => {
+      button.addEventListener("click", () => this.close());
+    });
 
     // دکمه "ورود به حساب"
     document
@@ -339,17 +411,28 @@ export class RegistrationSystem {
     const emailInput = this.form.querySelector("#regEmail");
     this.form.querySelectorAll('input[name="registrationChannel"]').forEach((radio) => {
       radio.addEventListener("change", () => {
+        this.backupEmailVisible = false;
         this.syncChannelRequirements();
         if (emailInput) this.clearValidation(emailInput);
         this.saveDraft();
       });
     });
+    const phoneInput = this.form.querySelector("#regPhone");
+    phoneInput?.addEventListener("input", () => {
+      phoneInput.value = this._normalizeDigits(phoneInput.value);
+    });
     this.syncChannelRequirements();
 
-    const toggleBtn = this.modal.querySelector(".password-toggle");
-    toggleBtn?.addEventListener("click", () => {
-      const inp = this.form.querySelector("#regPassword");
-      if (inp) inp.type = inp.type === "password" ? "text" : "password";
+    this.modal.addEventListener("click", (event) => {
+      const toggle = event.target.closest(".password-toggle");
+      if (!toggle || !this.modal.contains(toggle)) return;
+      const input = document.getElementById(toggle.getAttribute("aria-controls") || "regPassword");
+      if (!input) return;
+      const reveal = input.type === "password";
+      input.type = reveal ? "text" : "password";
+      toggle.classList.toggle("is-revealing", reveal);
+      toggle.setAttribute("aria-pressed", reveal ? "true" : "false");
+      toggle.setAttribute("aria-label", reveal ? "پنهان کردن رمز عبور" : "نمایش رمز عبور");
     });
 
     // Escape closes the Terms dialog first; it must not also dismiss registration.
@@ -394,21 +477,152 @@ export class RegistrationSystem {
     });
   }
 
+
+  _normalizeDigits(value) {
+    return String(value || "").replace(/[۰-۹٠-٩]/g, (digit) => {
+      const code = digit.charCodeAt(0);
+      return String(code >= 0x06F0 && code <= 0x06F9 ? code - 0x06F0 : code - 0x0660);
+    });
+  }
+
+  _handleModalKeydown(event) {
+    if (!this.modal?.classList.contains("active") || DOM.termsModal?.classList.contains("active")) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      this.close();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(this.modal.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter((element) => !element.closest("[hidden]") && element.getClientRects().length > 0);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && (document.activeElement === first || !this.modal.contains(document.activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !this.modal.contains(document.activeElement))) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  setVisualStep(step, moveFocus = false) {
+    this.visualStep = step === 2 ? 2 : 1;
+    const progress = document.getElementById("regWizardProgress");
+    const announce = document.getElementById("regStepAnnounce");
+    if (progress) {
+      progress.dataset.currentStep = String(this.visualStep);
+      progress.setAttribute("aria-valuenow", String(this.visualStep));
+      progress.setAttribute("aria-label", `مرحله ${this.visualStep} از ۲`);
+    }
+    this.form.querySelectorAll("[data-register-step]").forEach((panel) => {
+      const active = Number(panel.dataset.registerStep) === this.visualStep;
+      panel.hidden = !active;
+      panel.setAttribute("aria-hidden", active ? "false" : "true");
+    });
+    this.modal.querySelectorAll("[data-reg-step]").forEach((stage) => {
+      const number = Number(stage.dataset.regStep);
+      stage.classList.toggle("is-current", number === this.visualStep);
+      stage.classList.toggle("is-complete", number < this.visualStep);
+    });
+    const submitArea = document.getElementById("regSubmitArea");
+    if (submitArea) submitArea.hidden = this.visualStep !== 2;
+    if (announce) announce.textContent = this.visualStep === 1 ? "گام اول: اطلاعات شما" : "گام دوم: امنیت و تأیید";
+    if (moveFocus) {
+      const target = this.visualStep === 1 ? document.getElementById("regFullName") : document.getElementById("regPassword");
+      setTimeout(() => target?.focus(), 0);
+    }
+  }
+
+  _handleStep1Next() {
+    const fields = ["regFullName", "regPhone", "regUsername"];
+    let valid = true;
+    for (const id of fields) {
+      const input = document.getElementById(id);
+      if (input && !this.validateField(input)) valid = false;
+    }
+    if (!valid) {
+      this.notification?.error("لطفاً نام، شماره موبایل و نام کاربری را بررسی کنید.");
+      const firstInvalid = fields.map((id) => document.getElementById(id)).find((input) => input?.classList.contains("invalid"));
+      firstInvalid?.focus();
+      return;
+    }
+    this.saveDraft();
+    this.setVisualStep(2, true);
+  }
+
+  _validateStep2() {
+    const password = document.getElementById("regPassword");
+    const confirmation = document.getElementById("regPasswordConfirm");
+    let valid = true;
+    [password, confirmation].forEach((input) => { if (input && !this.validateField(input)) valid = false; });
+    const selected = this.form.querySelector('input[name="registrationChannel"]:checked')?.value || "";
+    if (!selected) {
+      valid = false;
+      const message = document.getElementById("regChannelMsg");
+      if (message) { message.textContent = "یکی از روش‌های فعال تلگرام یا ایمیل را انتخاب کنید."; message.className = "validation-message invalid"; }
+    } else {
+      const message = document.getElementById("regChannelMsg");
+      if (message) { message.textContent = ""; message.className = "validation-message"; }
+    }
+    const email = document.getElementById("regEmail");
+    if (email && !email.closest("[hidden]") && email.value.trim() && !this.validateField(email)) valid = false;
+    if (selected === "email" && email && !this.validateField(email)) valid = false;
+    const terms = document.getElementById("agreeTerms");
+    const termsMessage = document.getElementById("agreeTermsMsg");
+    if (!terms?.checked) {
+      valid = false;
+      if (termsMessage) { termsMessage.textContent = "برای ایجاد حساب، پذیرش قوانین و مقررات الزامی است."; termsMessage.className = "validation-message invalid"; }
+      terms?.focus();
+    } else if (termsMessage) {
+      termsMessage.textContent = "";
+      termsMessage.className = "validation-message";
+    }
+    if (!valid) this.notification?.error("لطفاً شرایط امنیتی، روش تأیید و پذیرش قوانین را بررسی کنید.");
+    return valid;
+  }
+
   syncChannelRequirements() {
     const selectedChannel = this.form.querySelector('input[name="registrationChannel"]:checked')?.value || "";
     const emailInput = this.form.querySelector("#regEmail");
+    const emailGroup = this.form.querySelector("#regEmailGroup");
+    const emailLabel = this.form.querySelector("#regEmailLabelText");
+    const emailHint = this.form.querySelector("#regEmailHint");
     const requirement = this.form.querySelector("#regEmailRequirement");
+    const backupToggle = this.form.querySelector("#regBackupToggle");
+    const telegramInfo = this.form.querySelector("#regTelegramInfo");
     const emailRequired = selectedChannel === "email";
-
+    const showBackup = selectedChannel === "telegram" && this.backupEmailVisible;
+    const showEmail = emailRequired || showBackup;
     if (emailInput) {
       emailInput.required = emailRequired;
       emailInput.setAttribute("aria-required", emailRequired ? "true" : "false");
     }
+    if (emailGroup) emailGroup.hidden = !showEmail;
+    if (emailLabel) emailLabel.textContent = emailRequired ? "ایمیل اصلی" : showBackup ? "ایمیل پشتیبان" : "ایمیل";
+    if (emailHint) emailHint.textContent = emailRequired
+      ? "کد تأیید حساب به این نشانی ارسال می‌شود؛ ایمیلی را وارد کنید که به آن دسترسی دارید."
+      : "این نشانی در ثبت‌نام تلگرامی به‌صورت تأییدنشده ذخیره می‌شود و تا زمان تأیید مستقل، روش بازیابی رمز نیست.";
     if (requirement) {
       requirement.textContent = emailRequired ? "اجباری" : "اختیاری";
       requirement.classList.toggle("optional-badge", !emailRequired);
       requirement.classList.toggle("required", emailRequired);
     }
+    if (backupToggle) {
+      backupToggle.hidden = selectedChannel !== "telegram";
+      backupToggle.setAttribute("aria-expanded", showBackup ? "true" : "false");
+      const text = backupToggle.querySelector("span");
+      if (text) text.textContent = showBackup ? "پنهان‌کردن ایمیل پشتیبان" : "افزودن ایمیل پشتیبان";
+    }
+    if (telegramInfo) telegramInfo.hidden = selectedChannel !== "telegram";
+    this.form.querySelectorAll(".verification-channel-option").forEach((card) => {
+      const selected = card.dataset.channel === selectedChannel;
+      card.classList.toggle("is-selected", selected);
+      const radio = card.querySelector('input[type="radio"]');
+      if (radio) radio.setAttribute("aria-checked", selected ? "true" : "false");
+    });
   }
 
   saveDraft() {
@@ -418,10 +632,11 @@ export class RegistrationSystem {
       email: document.getElementById("regEmail")?.value || "",
       username: document.getElementById("regUsername")?.value || "",
       selectedChannel: this.form.querySelector('input[name="registrationChannel"]:checked')?.value || "",
-      // رمز عبور ذخیره نمی‌شود (امنیتی)
+      backupEmailVisible: this.backupEmailVisible === true,
+      // Passwords, OTPs, challenge IDs and recovery capabilities are never stored in a draft.
       timestamp: Date.now(),
     };
-    sessionStorage.setItem(this.draftKey, JSON.stringify(draft));
+    try { sessionStorage.setItem(this.draftKey, JSON.stringify(draft)); } catch (error) {}
   }
 
   restoreDraft() {
@@ -439,18 +654,19 @@ export class RegistrationSystem {
       if (draft.phone) document.getElementById("regPhone").value = draft.phone;
       if (draft.email) document.getElementById("regEmail").value = draft.email;
       if (draft.selectedChannel) {
-        const channel = this.form.querySelector(`input[name="registrationChannel"][value="${draft.selectedChannel}"]`);
-        if (channel) channel.checked = true;
+        const channel = Array.from(this.form.querySelectorAll('input[name="registrationChannel"]'))
+          .find((radio) => radio.value === draft.selectedChannel);
+        if (channel && !channel.disabled) channel.checked = true;
       }
-      if (draft.username)
-        document.getElementById("regUsername").value = draft.username;
+      if (draft.username) document.getElementById("regUsername").value = draft.username;
+      this.backupEmailVisible = draft.backupEmailVisible === true;
     } catch (e) {
       sessionStorage.removeItem(this.draftKey);
     }
   }
 
   clearDraft() {
-    sessionStorage.removeItem(this.draftKey);
+    try { sessionStorage.removeItem(this.draftKey); } catch (error) {}
   }
 
   validateField(input) {
@@ -462,14 +678,15 @@ export class RegistrationSystem {
       txt = "";
     switch (input.name) {
       case "fullName":
-        valid = input.value.trim().length >= 3;
-        txt = valid ? "" : "حداقل ۳ کاراکتر";
+        valid = Array.from(input.value.trim()).length >= 3 && Array.from(input.value.trim()).length <= 160;
+        txt = valid ? "" : "نام و نام خانوادگی باید بین ۳ تا ۱۶۰ نویسه باشد.";
         break;
-      case "phone":
-        // Client-side shape hint only; PhoneValidator owns canonical server validation.
-        valid = /^[0-9۰-۹٠-٩ +().-]{7,32}$/.test(input.value.trim());
-        txt = valid ? "" : "قالب شماره تلفن معتبر نیست";
+      case "phone": {
+        const phone = this._normalizeDigits(input.value.trim());
+        valid = /^09[0-9]{9}$/.test(phone);
+        txt = valid ? "" : "شماره را با ۰۹ و دقیقاً ۱۱ رقم وارد کنید؛ کد کشور لازم نیست.";
         break;
+      }
       case "email": {
         const email = input.value.trim();
         const emailRequired = this.form.querySelector('input[name="registrationChannel"]:checked')?.value === "email";
@@ -493,8 +710,8 @@ export class RegistrationSystem {
         break;
       }
       case "passwordConfirm":
-        valid = input.value === this.form.querySelector("#regPassword").value;
-        txt = valid ? "" : "تکرار رمز یکسان نیست";
+        valid = input.value.length > 0 && input.value === this.form.querySelector("#regPassword").value;
+        txt = valid ? "" : "تکرار رمز با رمز عبور یکسان نیست.";
         break;
     }
 
@@ -503,11 +720,13 @@ export class RegistrationSystem {
       msg.className = "validation-message valid";
       input.classList.remove("invalid");
       input.classList.add("valid");
+      input.setAttribute("aria-invalid", "false");
     } else {
       msg.textContent = txt;
       msg.className = "validation-message invalid";
       input.classList.add("invalid");
       input.classList.remove("valid");
+      input.setAttribute("aria-invalid", "true");
     }
     return valid;
   }
@@ -520,60 +739,62 @@ export class RegistrationSystem {
       msg.className = "validation-message";
     }
     input.classList.remove("valid", "invalid");
+    input.removeAttribute("aria-invalid");
   }
 
   updatePasswordStrength() {
     const input = this.form.querySelector("#regPassword");
-    const policy = inspectRegistrationPassword(input?.value || "");
+    const value = input?.value || "";
+    const hasInput = value.length > 0;
+    const policy = inspectRegistrationPassword(value);
     const checks = {
-      length: policy.characterCount >= 15 && (input?.value || "").length > 0,
-      byteLimit: policy.withinByteLimit,
-      unicode: policy.validUnicode,
-      noControls: policy.hasNoControlCharacters,
+      length: hasInput && policy.characterCount >= 8 && policy.characterCount <= 15,
+      byteLimit: hasInput && policy.withinByteLimit,
+      unicode: hasInput && policy.validUnicode,
+      noControls: hasInput && policy.hasNoControlCharacters,
     };
-
-    this.form.querySelectorAll(".password-requirements .requirement").forEach((req) => {
-      const icon = req.querySelector(".check-icon");
-      const met = checks[req.dataset.check] === true;
-      if (icon) icon.textContent = met ? "✓" : "✗";
-      req.classList.toggle("met", met);
+    this.form.querySelectorAll(".password-requirements .requirement").forEach((requirement) => {
+      const met = checks[requirement.dataset.check] === true;
+      requirement.classList.toggle("met", met);
+      requirement.classList.toggle("failed", hasInput && !met);
+      requirement.classList.toggle("is-pending", !hasInput);
     });
-
     const score = Object.values(checks).filter(Boolean).length;
+    const percent = Math.round((score / 4) * 100);
     const bar = this.modal.querySelector(".strength-bar");
     if (bar) {
       bar.classList.remove("strength-level-0", "strength-level-1", "strength-level-2", "strength-level-3", "strength-level-4");
       bar.classList.add(`strength-level-${score}`);
     }
-
+    const meter = this.form.querySelector(".password-strength-meter");
+    if (meter) meter.setAttribute("aria-valuenow", String(hasInput ? percent : 0));
+    const meterValue = document.getElementById("regPasswordMeterValue");
+    if (meterValue) meterValue.textContent = `${hasInput ? percent : 0}٪`;
     const hint = this.form.querySelector("#regPasswordPolicyHint");
     if (hint) {
-      hint.textContent = input?.value
-        ? `${policy.characterCount} نویسه · ${policy.byteLength} از ۱۰۲۴ بایت UTF-8${policy.valid ? " · شرایط محلی رعایت شده" : " · " + policy.errors[0]}`
-        : "طول بر پایهٔ نویسه‌های Unicode و سقف بر پایهٔ بایت UTF-8 سنجیده می‌شود. فاصله‌های ابتدا و انتهای رمز حذف نمی‌شوند.";
+      hint.textContent = !hasInput
+        ? "رمز باید ۸ تا ۱۵ نویسه Unicode داشته باشد؛ ۱۰۲۴ بایت UTF-8 سقف فنی است."
+        : `${policy.characterCount} از ۱۵ نویسه · ${policy.byteLength} از ۱۰۲۴ بایت UTF-8${policy.valid ? " · همه شرایط رعایت شده" : ` · ${policy.errors[0] || "شرایط کامل نیست"}`}`;
     }
+    if (document.getElementById("regPasswordConfirm")?.value) this.validatePasswordMatch();
   }
 
   validatePasswordMatch() {
-    const pw = document.getElementById("regPassword").value;
+    const password = document.getElementById("regPassword")?.value || "";
     const confirm = document.getElementById("regPasswordConfirm");
-    const msg = confirm
-      .closest(".form-group")
-      ?.querySelector(".validation-message");
-
-    if (confirm.value && confirm.value !== pw) {
-      if (msg) {
-        msg.textContent = "تکرار رمز یکسان نیست";
-        msg.className = "validation-message invalid";
-      }
-      confirm.classList.add("invalid");
-    } else {
-      if (msg) {
-        msg.textContent = "";
-        msg.className = "validation-message";
-      }
-      confirm.classList.remove("invalid");
+    if (!confirm) return false;
+    const group = confirm.closest(".form-group");
+    const message = document.getElementById("regPasswordConfirmMsg") || group?.querySelector(".validation-message");
+    const hasValue = confirm.value.length > 0;
+    const valid = hasValue && confirm.value === password;
+    if (message) {
+      message.textContent = !hasValue ? "تکرار رمز را وارد کنید." : valid ? "" : "تکرار رمز با رمز عبور یکسان نیست.";
+      message.className = valid ? "validation-message valid" : "validation-message invalid";
     }
+    confirm.classList.toggle("valid", valid);
+    confirm.classList.toggle("invalid", !valid && hasValue);
+    confirm.setAttribute("aria-invalid", valid || !hasValue ? "false" : "true");
+    return valid;
   }
 
   async handleSubmit(e) {
@@ -589,35 +810,23 @@ export class RegistrationSystem {
       return;
     }
 
-    // مرحله ۱: ثبت اولیه. Required state follows the selected channel and mirrors RegistrationDTO.
+    if (this.visualStep !== 2) {
+      this._handleStep1Next();
+      return;
+    }
+
+    if (!this._validateStep2()) return;
+    // The browser only stages data; RegistrationDTO and PasswordPolicy remain authoritative on the server.
     this.syncChannelRequirements();
     const selectedChannel = this.form.querySelector('input[name="registrationChannel"]:checked')?.value || "";
-    const inputs = this.form.querySelectorAll("input[required]");
-    let allValid = true;
-    inputs.forEach((inp) => {
-      if (!this.validateField(inp)) allValid = false;
-    });
-
-    if (!allValid) {
-      this.notification?.error("لطفاً فیلدها را مطابق شرایط نمایش‌داده‌شده کامل کنید.");
-      return;
-    }
-
-
-    if (!selectedChannel) {
-      this.notification?.error("لطفاً دقیقاً یکی از کانال‌های Telegram یا Email را انتخاب کنید");
-      return;
-    }
-
-    if (!document.getElementById("agreeTerms").checked) {
-      this.notification?.error("لطفاً قوانین و مقررات را بپذیرید");
-      return;
-    }
+    if (!selectedChannel) return;
 
     const data = {
       fullName: document.getElementById("regFullName").value.trim(),
       phone: document.getElementById("regPhone").value.trim(),
-      email: document.getElementById("regEmail").value.trim() || null,
+      email: (selectedChannel === "email" || this.backupEmailVisible)
+        ? (document.getElementById("regEmail").value.trim() || null)
+        : null,
       username: document.getElementById("regUsername").value.trim(),
       password: document.getElementById("regPassword").value,
       selectedChannel,
@@ -674,6 +883,11 @@ export class RegistrationSystem {
   }
 
   showPendingStep() {
+    this.form.querySelectorAll(".register-step-panel").forEach((panel) => { panel.hidden = true; panel.setAttribute("aria-hidden", "true"); });
+    const progress = document.getElementById("regWizardProgress");
+    if (progress) progress.hidden = true;
+    const submitArea = document.getElementById("regSubmitArea");
+    if (submitArea) submitArea.hidden = true;
     const formGroups = this.form.querySelectorAll(".form-group, .checkbox-group");
     formGroups.forEach((group) => { group.hidden = true; });
 
@@ -686,7 +900,7 @@ export class RegistrationSystem {
       pendingSection.className = "pending-verification-section";
       pendingSection.innerHTML = `
         <div class="pending-verification-intro">
-          <div class="pending-verification-icon" aria-hidden="true">✉️</div>
+          <div class="pending-verification-icon" aria-hidden="true"><svg><use href="#auth-icon-mail"></use></svg></div>
           <h3 class="pending-verification-title">ثبت موقت انجام شد</h3>
           <p class="pending-verification-copy">
             هنوز حسابی ایجاد یا تأیید نشده است. برای دریافت کد، درخواست زیر را ارسال کنید.
@@ -723,6 +937,7 @@ export class RegistrationSystem {
         if (status) status.textContent = "اتصال Telegram قبلی سمت سرور تأیید شده است. اکنون می‌توانید کد تأیید را درخواست کنید؛ حساب هنوز تأیید نشده است.";
         checkLinkButton.disabled = true;
       } else if (this.pendingTelegramLinkUrl && this.isTrustedTelegramLink(this.pendingTelegramLinkUrl)) {
+        link.hidden = false;
         link.href = this.pendingTelegramLinkUrl;
         checkLinkButton.disabled = false;
       } else {
@@ -732,13 +947,23 @@ export class RegistrationSystem {
         if (status) status.textContent = "اتصال Telegram هنوز پیکربندی نشده است؛ Bot username، Secret و HTTPS عمومی باید توسط مدیر تنظیم شوند. هیچ کدی ارسال نشده است.";
       }
       startButton.disabled = this.telegramLinked !== true;
-      checkLinkButton.addEventListener("click", () => this.checkTelegramLink());
+      if (!checkLinkButton.dataset.bound) {
+        checkLinkButton.dataset.bound = "true";
+        checkLinkButton.addEventListener("click", () => this.checkTelegramLink());
+      }
     } else {
       linkPanel.hidden = true;
       startButton.disabled = false;
     }
-    startButton.addEventListener("click", () => this.startVerification());
-    pendingSection.querySelector("#closePendingRegistrationBtn")?.addEventListener("click", () => this.close());
+    if (!startButton.dataset.bound) {
+      startButton.dataset.bound = "true";
+      startButton.addEventListener("click", () => this.startVerification());
+    }
+    const closePending = pendingSection.querySelector("#closePendingRegistrationBtn");
+    if (closePending && !closePending.dataset.bound) {
+      closePending.dataset.bound = "true";
+      closePending.addEventListener("click", () => this.close());
+    }
   }
 
   isTrustedTelegramLink(value) {
@@ -831,6 +1056,9 @@ export class RegistrationSystem {
   }
 
   showVerifyStep(data = null) {
+    this.form.querySelectorAll(".register-step-panel").forEach((panel) => { panel.hidden = true; panel.setAttribute("aria-hidden", "true"); });
+    const progress = document.getElementById("regWizardProgress");
+    if (progress) progress.hidden = true;
     const formGroups = this.form.querySelectorAll(".form-group, .checkbox-group");
     formGroups.forEach((group) => { group.hidden = true; });
     const pendingSection = this.form.querySelector(".pending-verification-section");
@@ -842,7 +1070,7 @@ export class RegistrationSystem {
       verifySection.className = "verify-section";
       verifySection.innerHTML = `
         <div class="verify-info">
-          <div class="verify-icon" aria-hidden="true">🔐</div>
+          <div class="verify-icon" aria-hidden="true"><svg><use href="#auth-icon-shield"></use></svg></div>
           <h3 class="verify-title">Challenge تأیید فعال است</h3>
           <p id="verifyDeliveryDescription" class="verify-description"></p>
         </div>
@@ -868,6 +1096,10 @@ export class RegistrationSystem {
     const expiry = verifySection.querySelector("#verifyExpiryStatus");
     if (expiry) expiry.textContent = data?.expiresAt ? `اعتبار Challenge تا ${data.expiresAt} (UTC) است؛ مدت مصوب ۱۲۰ ثانیه.` : "اعتبار کد ۱۲۰ ثانیه از زمان پذیرش ارسال است.";
     verifySection.hidden = false;
+    const verifyCodeGroup = verifySection.querySelector(".verify-code-group");
+    if (verifyCodeGroup) verifyCodeGroup.hidden = false;
+    const submitArea = document.getElementById("regSubmitArea");
+    if (submitArea) submitArea.hidden = false;
     const submit = this.form.querySelector('button[type="submit"]');
     if (submit) {
       submit.hidden = false;
@@ -875,8 +1107,23 @@ export class RegistrationSystem {
     }
     const btnText = submit?.querySelector(".btn-text");
     if (btnText) btnText.textContent = "تأیید کد و تکمیل ثبت‌نام";
-    verifySection.querySelector("#resendCodeBtn")?.addEventListener("click", () => this.resendCode());
-    verifySection.querySelector("#closeVerifyBtn")?.addEventListener("click", () => this.close());
+    const resend = verifySection.querySelector("#resendCodeBtn");
+    if (resend && !resend.dataset.bound) {
+      resend.dataset.bound = "true";
+      resend.addEventListener("click", () => this.resendCode());
+    }
+    const closeVerify = verifySection.querySelector("#closeVerifyBtn");
+    if (closeVerify && !closeVerify.dataset.bound) {
+      closeVerify.dataset.bound = "true";
+      closeVerify.addEventListener("click", () => this.close());
+    }
+    const verifyCodeInput = verifySection.querySelector("#verifyCode");
+    if (verifyCodeInput && !verifyCodeInput.dataset.bound) {
+      verifyCodeInput.dataset.bound = "true";
+      verifyCodeInput.addEventListener("input", (event) => {
+        event.currentTarget.value = this._normalizeDigits(event.currentTarget.value).replace(/[^0-9]/g, "").slice(0, 6);
+      });
+    }
     setTimeout(() => verifySection.querySelector("#verifyCode")?.focus(), 100);
   }
 
@@ -984,44 +1231,81 @@ export class RegistrationSystem {
   }
 
   open() {
-    this.step = "info";
-    this.pendingAttemptId = null;
-    this.pendingChallengeId = null;
-    this.pendingIdentifier = null;
-    this.pendingTelegramLinkUrl = null;
-    this.telegramLinked = false;
-    this.form.querySelectorAll("input").forEach((input) => { input.disabled = false; });
-
-    // Remove flow panels and restore the original registration form.
-    this.form.querySelector(".verify-section")?.remove();
-    this.form.querySelector(".pending-verification-section")?.remove();
-    const registrationSubmit = this.form.querySelector('button[type="submit"]');
-    if (registrationSubmit) registrationSubmit.hidden = false;
-
-    // نمایش تمام form groups
-    const formGroups = this.form.querySelectorAll(
-      ".form-group, .checkbox-group",
-    );
-    formGroups.forEach((group) => { group.hidden = false; });
-
-    // ریست متن دکمه
-    const btn = this.form.querySelector('button[type="submit"]');
-    const btnText = btn?.querySelector(".btn-text");
-    if (btnText) btnText.textContent = "ایجاد حساب کاربری";
-
+    const canResume = ["pending", "verify"].includes(this.step)
+      && typeof this.pendingAttemptId === "string"
+      && /^[a-f0-9]{32}$/.test(this.pendingAttemptId);
+    this.previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     this.modal.classList.add("active");
     this.modal.removeAttribute("hidden");
+    this.modal.setAttribute("aria-hidden", "false");
     syncSharedModalScrollLock();
-    this.form.reset();
-    this.restoreDraft();
-    this.syncChannelRequirements();
-    this.updatePasswordStrength();
+    if (!canResume) {
+      this.step = "info";
+      this.visualStep = 1;
+      this.pendingAttemptId = null;
+      this.pendingChallengeId = null;
+      this.pendingIdentifier = null;
+      this.pendingTelegramLinkUrl = null;
+      this.telegramLinked = false;
+      this.backupEmailVisible = false;
+      this.form.querySelectorAll("input").forEach((input) => { input.disabled = false; });
+      this.form.querySelector(".verify-section")?.remove();
+      this.form.querySelector(".pending-verification-section")?.remove();
+      const submitArea = document.getElementById("regSubmitArea");
+      if (submitArea) submitArea.hidden = true;
+      this.form.reset();
+      this.restoreDraft();
+      this.setVisualStep(1, false);
+      this.syncChannelRequirements();
+      this.updatePasswordStrength();
+      this.form.querySelectorAll(".validation-message").forEach((message) => {
+        message.textContent = "";
+        message.className = "validation-message";
+      });
+      this.form.querySelectorAll(".valid, .invalid").forEach((input) => input.classList.remove("valid", "invalid"));
+      this.form.querySelectorAll('input[type="password"], input[autocomplete="new-password"]').forEach((input) => { input.type = "password"; });
+      this.form.querySelectorAll(".password-toggle").forEach((toggle) => {
+        toggle.classList.remove("is-revealing");
+        toggle.setAttribute("aria-pressed", "false");
+        toggle.setAttribute("aria-label", "نمایش رمز عبور");
+      });
+      setTimeout(() => {
+        if (this.modal?.classList.contains("active")) document.getElementById("regFullName")?.focus();
+      }, 80);
+      return;
+    }
+    if (this.step === "pending") {
+      this.showPendingStep();
+      setTimeout(() => this.form.querySelector("#startVerificationBtn")?.focus(), 80);
+    } else {
+      this.showVerifyStep();
+      setTimeout(() => this.form.querySelector("#verifyCode")?.focus(), 80);
+    }
   }
 
   close() {
+    if (!this.modal) return;
+    if (this.step === "info") this.saveDraft();
+    ["regPassword", "regPasswordConfirm", "verifyCode"].forEach((id) => {
+      const input = document.getElementById(id);
+      if (input) { input.value = ""; if (input.type === "text") input.type = "password"; }
+    });
+    this.form?.querySelectorAll(".password-toggle").forEach((toggle) => {
+      toggle.classList.remove("is-revealing");
+      toggle.setAttribute("aria-pressed", "false");
+      toggle.setAttribute("aria-label", "نمایش رمز عبور");
+    });
     this.modal.classList.remove("active");
     this.modal.setAttribute("hidden", "");
+    this.modal.setAttribute("aria-hidden", "true");
     syncSharedModalScrollLock();
+    const target = this.previousFocus;
+    this.previousFocus = null;
+    if (target?.isConnected && target.getClientRects().length > 0) {
+      setTimeout(() => {
+        try { target.focus({ preventScroll: true }); } catch { target.focus(); }
+      }, 0);
+    }
   }
 }
 
@@ -1070,6 +1354,25 @@ export class ForgotPasswordSystem {
     document.getElementById("fpCode")?.addEventListener("input", (event) => {
       const input = event.currentTarget;
       input.value = this.normalizeDigits(input.value).replace(/[^0-9]/g, "").slice(0, 6);
+    });
+    this.modal.addEventListener("click", (event) => {
+      const toggle = event.target.closest(".password-toggle");
+      if (!toggle || !this.modal.contains(toggle)) return;
+      const input = document.getElementById(toggle.getAttribute("aria-controls") || "");
+      if (!input) return;
+      const reveal = input.type === "password";
+      input.type = reveal ? "text" : "password";
+      toggle.classList.toggle("is-revealing", reveal);
+      toggle.setAttribute("aria-pressed", reveal ? "true" : "false");
+      toggle.setAttribute("aria-label", reveal ? "پنهان کردن رمز عبور" : "نمایش رمز عبور");
+    });
+    document.getElementById("fpNewPassword")?.addEventListener("input", () => {
+      const value = document.getElementById("fpNewPassword")?.value || "";
+      const policy = inspectRegistrationPassword(value);
+      const hint = document.getElementById("fpPasswordPolicyHint");
+      if (hint) hint.textContent = value
+        ? `${policy.characterCount} از ۱۵ نویسه · ${policy.byteLength} از ۱۰۲۴ بایت UTF-8${policy.valid ? " · شرایط رعایت شده" : ` · ${policy.errors[0] || "شرایط کامل نیست"}`}`
+        : "رمز عبور باید ۸ تا ۱۵ نویسه Unicode داشته باشد.";
     });
     this.updateIdentifierHelp();
     this.setStage("request", false);
@@ -1147,9 +1450,20 @@ export class ForgotPasswordSystem {
     if (confirmPassword) confirmPassword.required = active === "reset";
     const buttonText = this.form?.querySelector('button[type="submit"] .btn-text');
     if (buttonText) {
-      buttonText.textContent = active === "request" ? "📤 ادامهٔ بازیابی"
-        : active === "verify" ? "🔐 تأیید کد"
-          : "🔑 بازنشانی رمز عبور";
+      buttonText.textContent = active === "request" ? "ادامهٔ بازیابی"
+        : active === "verify" ? "تأیید کد"
+          : "بازنشانی رمز عبور";
+    }
+    const progress = this.modal?.querySelector(".fp-progress");
+    const stageNumber = active === "request" ? 1 : active === "verify" ? 2 : 3;
+    if (progress) {
+      progress.setAttribute("aria-valuenow", String(stageNumber));
+      progress.setAttribute("aria-label", `مرحله ${stageNumber} از ۳`);
+      progress.querySelectorAll("[data-fp-step-dot]").forEach((dot) => {
+        const number = Number(dot.dataset.fpStepDot);
+        dot.classList.toggle("is-current", number === stageNumber);
+        dot.classList.toggle("is-complete", number < stageNumber);
+      });
     }
     if (moveFocus && this.modal?.classList.contains("active")) {
       const target = active === "request" ? identifierInput : active === "verify" ? codeInput : newPassword;
@@ -1292,8 +1606,8 @@ export class ForgotPasswordSystem {
     this.busy = false;
     this.setStage(this.step, false);
     const submitText = this.form?.querySelector('button[type="submit"] .btn-text');
-    if (submitText) submitText.textContent = this.step === "request" ? "📤 ادامهٔ بازیابی"
-      : this.step === "verify" ? "🔐 تأیید کد" : "🔑 بازنشانی رمز عبور";
+    if (submitText) submitText.textContent = this.step === "request" ? "ادامهٔ بازیابی"
+      : this.step === "verify" ? "تأیید کد" : "بازنشانی رمز عبور";
   }
 
   async withBusy(label, action) {
@@ -1554,6 +1868,12 @@ export class ForgotPasswordSystem {
     this.clearRecoveryAttempt();
     this.step = "request";
     this.form?.reset();
+    this.modal?.querySelectorAll(".password-toggle").forEach((toggle) => {
+      toggle.classList.remove("is-revealing");
+      toggle.setAttribute("aria-pressed", "false");
+      toggle.setAttribute("aria-label", "نمایش رمز عبور");
+    });
+    this.modal?.querySelectorAll('input[autocomplete="new-password"]').forEach((input) => { input.type = "password"; });
     this.clearStatus();
     this.setStage("request", false);
     this.updateIdentifierHelp();
@@ -1562,7 +1882,9 @@ export class ForgotPasswordSystem {
     this.modal?.setAttribute("aria-hidden", "false");
     syncSharedModalScrollLock();
     this.applyRetryCooldown();
-    setTimeout(() => document.getElementById("fpIdentifier")?.focus(), 0);
+    setTimeout(() => {
+      if (this.modal?.classList.contains("active")) document.getElementById("fpIdentifier")?.focus();
+    }, 0);
   }
 
   close() {
@@ -1572,6 +1894,12 @@ export class ForgotPasswordSystem {
     this.method = "";
     this.step = "request";
     this.form?.reset();
+    this.modal?.querySelectorAll(".password-toggle").forEach((toggle) => {
+      toggle.classList.remove("is-revealing");
+      toggle.setAttribute("aria-pressed", "false");
+      toggle.setAttribute("aria-label", "نمایش رمز عبور");
+    });
+    this.modal?.querySelectorAll('input[autocomplete="new-password"]').forEach((input) => { input.type = "password"; });
     this.clearStatus();
     this.setStage("request", false);
     this.modal?.classList.remove("active");
@@ -1590,29 +1918,71 @@ export class ForgotPasswordSystem {
 export class TermsModal {
   constructor() {
     this.modal = DOM.termsModal;
+    this.previousFocus = null;
+    this._keyHandler = (event) => this.handleKeydown(event);
     this.init();
   }
+
   init() {
-    this.modal
-      .querySelector(".terms-close")
-      ?.addEventListener("click", () => this.close());
-    this.modal
-      .querySelector(".terms-backdrop")
-      ?.addEventListener("click", () => this.close());
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.modal.classList.contains("active"))
-        this.close();
-    });
+    if (!this.modal) return;
+    this.modal.querySelector(".terms-close")?.addEventListener("click", () => this.close());
+    this.modal.querySelector(".terms-backdrop")?.addEventListener("click", () => this.close());
+    document.addEventListener("keydown", this._keyHandler, true);
   }
+
+  handleKeydown(event) {
+    if (!this.modal?.classList.contains("active")) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      this.close();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(this.modal.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter((element) => !element.closest("[hidden]") && element.getClientRects().length > 0);
+    if (!focusable.length) {
+      event.preventDefault();
+      this.modal.querySelector(".terms-container")?.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && (document.activeElement === first || !this.modal.contains(document.activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !this.modal.contains(document.activeElement))) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   open() {
+    if (!this.modal) return;
+    this.previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     this.modal.classList.add("active");
     this.modal.removeAttribute("hidden");
+    this.modal.setAttribute("aria-hidden", "false");
     syncSharedModalScrollLock();
+    setTimeout(() => {
+      if (this.modal?.classList.contains("active")) this.modal.querySelector(".terms-close")?.focus();
+    }, 0);
   }
+
   close() {
+    if (!this.modal) return;
     this.modal.classList.remove("active");
     this.modal.setAttribute("hidden", "");
+    this.modal.setAttribute("aria-hidden", "true");
     syncSharedModalScrollLock();
+    const target = this.previousFocus;
+    this.previousFocus = null;
+    if (target?.isConnected && target.getClientRects().length > 0) {
+      setTimeout(() => {
+        try { target.focus({ preventScroll: true }); } catch { target.focus(); }
+      }, 0);
+    }
   }
 }
 

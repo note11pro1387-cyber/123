@@ -95,18 +95,18 @@ $assert(!ChallengeStateMachine::isPasswordResetConsumable(array_merge($active, [
 $assert(!ChallengeStateMachine::isPasswordResetConsumable(array_merge($active, ['attempts' => 5]), $now), 'maximum attempts enforced');
 $assert(!ChallengeStateMachine::isPasswordResetConsumable(array_merge($active, ['expires_at' => 'garbage']), $now), 'malformed expiry fails closed');
 
-// Password changes reuse the central policy; no trimming or legacy eight-character rule.
-PasswordPolicy::validate('correct horse battery');
-$expectProblem(static fn() => PasswordPolicy::validate('12345678901234'), 'PASSWORD_POLICY_VIOLATION', 'fourteen-character password rejected');
-PasswordPolicy::validate(' 12345678901234 ');
-$spacedPasswordHash = PasswordPolicy::hash(' 12345678901234 ');
-$assert(password_verify(' 12345678901234 ', $spacedPasswordHash), 'password whitespace is preserved as user-selected content');
+// Password changes reuse the central 8–15 Unicode-character policy; whitespace is preserved.
+PasswordPolicy::validate('correcthorse12');
+$expectProblem(static fn() => PasswordPolicy::validate('1234567890123456'), 'PASSWORD_POLICY_VIOLATION', 'sixteen-character password rejected');
+PasswordPolicy::validate(' 12345678 ');
+$spacedPasswordHash = PasswordPolicy::hash(' 12345678 ');
+$assert(password_verify(' 12345678 ', $spacedPasswordHash), 'password whitespace is preserved as user-selected content');
 $expectProblem(static fn() => PasswordPolicy::validate("1234567890123\nxx"), 'PASSWORD_POLICY_VIOLATION', 'control characters rejected');
 $longPassword = str_repeat('é', 513);
 $expectProblem(static fn() => PasswordPolicy::validate($longPassword), 'PASSWORD_POLICY_VIOLATION', 'password exceeding 1024 bytes rejected');
-$hash = PasswordPolicy::hash('correct horse battery');
-$assert(password_verify('correct horse battery', $hash), 'new password hash verifies with central policy');
-$assert(!password_verify('wrong horse battery', $hash), 'wrong password does not verify');
+$hash = PasswordPolicy::hash('correcthorse12');
+$assert(password_verify('correcthorse12', $hash), 'new password hash verifies with central policy');
+$assert(!password_verify('wronghorse12', $hash), 'wrong password does not verify');
 
 // API contract routing: new three-step flow, legacy combined endpoint deliberately closed.
 $assert(MethodPolicy::known('forgotPassword') && MethodPolicy::known('verifyResetCode') && MethodPolicy::known('resetPassword'), 'Recovery API actions are registered');

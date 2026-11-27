@@ -156,7 +156,7 @@ try {
         'full_name' => 'Synthetic Conflict Fixture',
         'username' => $takenUsername,
         'phone' => $takenPhone,
-        'password_hash' => PasswordPolicy::hash('Synthetic existing password ' . $suffix),
+        'password_hash' => password_hash('Synthetic existing password ' . $suffix, PASSWORD_DEFAULT),
         'account_status' => 'pending',
     ]);
     $userIds[] = (int) $user['id'];
@@ -164,7 +164,7 @@ try {
         'fullName' => 'Synthetic Conflict Fixture',
         'username' => $takenUsername,
         'phone' => '+989' . (string) random_int(100000000, 999999999),
-        'password' => 'Synthetic new password ' . $suffix,
+        'password' => 'Neon2026',
         'email' => null,
         'selectedChannel' => 'telegram',
         'termsAccepted' => true,
