@@ -247,8 +247,13 @@ try {
     exit(0);
 } catch (Throwable $exception) {
     if ($sourcePdo instanceof PDO && $sourcePdo->inTransaction()) $sourcePdo->rollBack();
-    // No SQL, source values, DSN or credentials are emitted.
-    fwrite(STDERR, 'FAIL: ' . preg_replace('/[^A-Z0-9_ .:-]/i', '', $exception->getMessage()) . PHP_EOL);
+    // Emit only exception class and source location; never SQL, values, DSN or credentials.
+    $origin = basename($exception->getFile()) . ':' . $exception->getLine();
+    fwrite(
+        STDERR,
+        'FAIL [' . get_class($exception) . '@' . $origin . ']: '
+        . preg_replace('/[^A-Z0-9_ .:-]/i', '', $exception->getMessage()) . PHP_EOL
+    );
     exit(1);
 } finally {
     if (is_array($backupResult)) {
