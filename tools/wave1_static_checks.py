@@ -396,6 +396,21 @@ def main() -> int:
     require("MRNEON_BACKUP_DIR=\n" in env_example,
             "MRNEON_BACKUP_DIR stays empty in the portable template")
 
+    gitleaks_ignore_path = root / ".gitleaksignore"
+    expected_historical_fixtures = {
+        "af595257c9cf90bfc273c7d1f28353f5aba6c25f:tests/Unit/run-wave3-unit.php:generic-api-key:36",
+        "af595257c9cf90bfc273c7d1f28353f5aba6c25f:.env.example:generic-api-key:29",
+        "af595257c9cf90bfc273c7d1f28353f5aba6c25f:tests/Integration/run-wave3-auth-db-integration.php:generic-api-key:61",
+    }
+    ignored_fingerprints = {
+        line.strip() for line in gitleaks_ignore_path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    } if gitleaks_ignore_path.is_file() else set()
+    require(
+        ignored_fingerprints == expected_historical_fixtures,
+        "Gitleaks history exceptions are limited to three exact verified RFC/empty-template fixtures; real credentials remain scanned",
+    )
+
     workflow_path = root / ".github/workflows/ci.yml"
     workflow = workflow_path.read_text(encoding="utf-8") if workflow_path.is_file() else ""
     require("tools/wave1_static_checks.py" in workflow, "baseline CI runs the Wave 1 static contract checker")
