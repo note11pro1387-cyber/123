@@ -24,7 +24,7 @@ jobs:
           git archive --format=zip --output="$RUNNER_TEMP/mr-neon-source.zip" HEAD
           unzip -t "$RUNNER_TEMP/mr-neon-source.zip"
       - name: Upload source archive
-        uses: actions/upload-artifact@7.0.2
+        uses: actions/upload-artifact@v4
         with:
           name: mr-neon-final-source
           path: ${{ runner.temp }}/mr-neon-source.zip
