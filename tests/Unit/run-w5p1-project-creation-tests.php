@@ -48,6 +48,10 @@ final class W5P1FakePDO extends PDO
             $key = self::idemKey($p[0], $p[1], $p[2], $p[3]);
             return ['rows' => isset($this->idempotency[$key]) ? [$this->idempotency[$key]] : []];
         }
+        if (str_starts_with($sql, 'DELETE FROM idempotency_keys WHERE scope_type = ?')) {
+            // No expired terminal reservation exists in this deterministic fake store.
+            return ['rows'=>[], 'affected'=>0];
+        }
         if (str_starts_with($sql, 'INSERT INTO idempotency_keys')) {
             $key = self::idemKey($p[0], $p[1], $p[2], $p[3]);
             if (isset($this->idempotency[$key])) throw new PDOException('duplicate key', 23000);
