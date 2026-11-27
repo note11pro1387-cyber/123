@@ -1,0 +1,32 @@
+name: Export final MR NEON source
+
+on:
+  push:
+    branches:
+      - handoff/final-source-2026-11-28
+
+permissions:
+  contents: read
+
+jobs:
+  export-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact snapshot commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Archive tracked source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git archive --format=zip --output="$RUNNER_TEMP/mr-neon-source.zip" HEAD
+          unzip -t "$RUNNER_TEMP/mr-neon-source.zip"
+      - name: Upload source archive
+        uses: actions/upload-artifact@7.0.2
+        with:
+          name: mr-neon-final-source
+          path: ${{ runner.temp }}/mr-neon-source.zip
+          if-no-files-found: error
+          retention-days: 1
