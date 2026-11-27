@@ -223,7 +223,9 @@ try {
 
     $testPassed = true;
 } catch (Throwable $exception) {
-    fwrite(STDERR, 'FAIL: Wave 3 auth database integration; exception_type=' . get_class($exception) . PHP_EOL);
+    // Report only the source location and exception class; never disclose credentials or test data.
+    $origin = basename($exception->getFile()) . ':' . $exception->getLine();
+    fwrite(STDERR, 'FAIL: Wave 3 auth database integration; exception_type=' . get_class($exception) . '@' . $origin . PHP_EOL);
     $exit = 1;
 } finally {
     if ($pdo instanceof PDO) {
