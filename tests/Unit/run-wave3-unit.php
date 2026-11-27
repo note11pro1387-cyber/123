@@ -33,7 +33,7 @@ $assert(ApiRequest::clientIp() === '192.0.2.17', 'client IP ignores untrusted fo
 $_SERVER['REMOTE_ADDR'] = 'not-an-ip';
 $assert(ApiRequest::clientIp() === 'unknown', 'invalid remote address is normalized safely');
 
-$secret = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+$secret = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'; // gitleaks:allow -- published RFC 6238 Appendix B test vector; never a production credential.
 $assert(Totp::matchingCounter($secret, '287082', 59, 0) === 1, 'TOTP verifier matches RFC 6238 six-digit vector');
 $assert(Totp::verify($secret, '287082', 59, 0), 'TOTP valid six-digit vector accepted');
 $assert(!Totp::verify($secret, '287083', 59, 0), 'TOTP incorrect code rejected');

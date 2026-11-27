@@ -48,6 +48,10 @@ final class W5P1FakePDO extends PDO
             $key = self::idemKey($p[0], $p[1], $p[2], $p[3]);
             return ['rows' => isset($this->idempotency[$key]) ? [$this->idempotency[$key]] : []];
         }
+        if (str_starts_with($sql, 'DELETE FROM idempotency_keys WHERE scope_type = ?')) {
+            // No expired terminal reservation exists in this deterministic fake store.
+            return ['rows'=>[], 'affected'=>0];
+        }
         if (str_starts_with($sql, 'INSERT INTO idempotency_keys')) {
             $key = self::idemKey($p[0], $p[1], $p[2], $p[3]);
             if (isset($this->idempotency[$key])) throw new PDOException('duplicate key', 23000);
@@ -112,7 +116,7 @@ $checks = 0;
 function w5check(bool $condition, string $label): void { global $checks; $checks++; if (!$condition) throw new RuntimeException('FAIL: '.$label); echo "PASS: {$label}\n"; }
 function validW5Payload(): array
 {
-    return ['industry'=>'tech','purpose'=>'saas','colors'=>['palettes'=>['neon'],'customColors'=>['آبی','#ABCDEF']],'style'=>'modern','features'=>['ai','seo'],'content'=>['logo'=>'ready','text'=>'partial','images'=>'ready'],'timeline'=>'normal','fullName'=>'کاربر آزمایشی','phone'=>'۰۹۱۲۳۴۵۶۷۸۹','email'=>'test@example.test','messenger'=>'تلگرام','messengerId'=>'test-user','userNote'=>'شرح پروژه آزمایشی'];
+    return ['industry'=>'tech','purpose'=>'saas','colors'=>['palettes'=>['neon'],'customColors'=>['#123ABC','#ABCDEF']],'style'=>'modern','features'=>['ai','seo'],'content'=>['logo'=>'ready','text'=>'partial','images'=>'ready'],'timeline'=>'normal','fullName'=>'کاربر آزمایشی','phone'=>'۰۹۱۲۳۴۵۶۷۸۹','email'=>'test@example.test','messenger'=>'تلگرام','messengerId'=>'test-user','userNote'=>'شرح پروژه آزمایشی'];
 }
 function expectW5Problem(callable $action, int $status, string $code, string $label): void
 {

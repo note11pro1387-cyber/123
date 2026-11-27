@@ -8,6 +8,8 @@ $assert = static function (bool $condition, string $label) use (&$checks): void 
     if (!$condition) throw new RuntimeException('Unit check failed: ' . $label);
 };
 
+$assert(class_exists(ChallengeStateMachine::class), 'CLI bootstrap autoloads the challenge lifecycle state machine');
+
 $assert(LegacyUserMapper::canonicalIranianMobile('09121234567') === '+989121234567', 'Iranian local phone normalization');
 $assert(LegacyUserMapper::canonicalIranianMobile('+989121234567') === '+989121234567', 'Iranian canonical phone acceptance');
 $assert(LegacyUserMapper::canonicalIranianMobile('۰۹۱۲۱۲۳۴۵۶۷') === '+989121234567', 'Persian digit normalization');

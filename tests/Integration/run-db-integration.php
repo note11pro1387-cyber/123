@@ -92,7 +92,7 @@ try {
         $assert(count($milestoneRows) === 6 && array_sum(array_column($milestoneRows, 'weight')) === 100, 'milestone weights cover 100 percent');
         $milestones->setStatus((int) $milestoneRows[0]['id'], 'completed');
         $assert($milestones->completedWeightPercent($project['id']) === 10, 'project progress derives from completed milestone weights');
-        $events->append($project['id'], 'system', null, 'project_created', null, 'submitted', 'Synthetic integration event', ['fixture'=>'SYNTHETIC TEST DATA']);
+        $events->append($project['id'], 'system', null, 'project.submitted', null, 'submitted', 'Synthetic integration event', ['fixture'=>'SYNTHETIC TEST DATA']);
         $ownerEvents = $events->listForOwnerProject($project['id'], $user1['id']);
         $otherOwnerEvents = $events->listForOwnerProject($project['id'], $user2['id']);
         $assert(count($ownerEvents) === 1 && count($otherOwnerEvents) === 0, 'customer event query enforces project ownership in SQL');
@@ -247,8 +247,13 @@ try {
     exit(0);
 } catch (Throwable $exception) {
     if ($sourcePdo instanceof PDO && $sourcePdo->inTransaction()) $sourcePdo->rollBack();
-    // No SQL, source values, DSN or credentials are emitted.
-    fwrite(STDERR, 'FAIL: ' . preg_replace('/[^A-Z0-9_ .:-]/i', '', $exception->getMessage()) . PHP_EOL);
+    // Emit only exception class and source location; never SQL, values, DSN or credentials.
+    $origin = basename($exception->getFile()) . ':' . $exception->getLine();
+    fwrite(
+        STDERR,
+        'FAIL [' . get_class($exception) . '@' . $origin . ']: '
+        . preg_replace('/[^A-Z0-9_ .:-]/i', '', $exception->getMessage()) . PHP_EOL
+    );
     exit(1);
 } finally {
     if (is_array($backupResult)) {

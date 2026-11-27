@@ -58,7 +58,7 @@ $username = 'W3' . bin2hex(random_bytes(4));
 $password = 'SYNTHETIC WAVE3 USER PASSWORD ONLY';
 $adminUsername = 'SYNTHETIC-W3-ADMIN';
 $adminPassword = 'SYNTHETIC WAVE3 ADMIN PASSWORD ONLY';
-$totpSecret = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+$totpSecret = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'; // gitleaks:allow -- published RFC 6238 Appendix B test vector; never a production credential.
 $totpCounterUsed = null;
 $unknownIdentity = null;
 $testPassed = false;
@@ -203,27 +203,38 @@ try {
     catch (ApiProblemException $e) { $limitRejected = $e->httpStatus === 429 && isset($e->responseHeaders['Retry-After']); }
     $assert($firstRejected && $limitRejected, 'DB-backed login rate limit returns 429 and Retry-After after configured threshold');
 
-    putenv('MRNEON_SESSION_STATUS_IP_LIMIT=1');
+    // Production configuration intentionally enforces a minimum of five requests per window.
+    putenv('MRNEON_SESSION_STATUS_IP_LIMIT=5');
     $_SERVER['REMOTE_ADDR'] = '203.0.113.21';
     $sessionStatusFirst = $auth->getSession();
     $sessionStatusRateLimited = false;
-    try { $auth->getSession(); }
-    catch (ApiProblemException $e) { $sessionStatusRateLimited = $e->httpStatus === 429 && isset($e->responseHeaders['Retry-After']); }
-    $assert(($sessionStatusFirst['authenticated'] ?? null) === false && $sessionStatusRateLimited, 'session status endpoint has bounded DB-backed IP rate limiting');
+    for ($attempt = 0; $attempt < 5 && !$sessionStatusRateLimited; $attempt++) {
+        try { $auth->getSession(); }
+        catch (ApiProblemException $e) {
+            $sessionStatusRateLimited = $e->httpStatus === 429 && isset($e->responseHeaders['Retry-After']);
+        }
+    }
+    $assert(($sessionStatusFirst['authenticated'] ?? null) === false && $sessionStatusRateLimited, 'session status endpoint has bounded DB-backed IP rate limiting at the configured minimum');
 
-    putenv('MRNEON_LOGOUT_IP_LIMIT=1');
+    putenv('MRNEON_LOGOUT_IP_LIMIT=5');
     $_SERVER['REMOTE_ADDR'] = '203.0.113.51';
     $_SERVER['HTTP_X_CSRF_TOKEN'] = Csrf::token();
     $anonymousLogout = $auth->logout();
-    $_SERVER['HTTP_X_CSRF_TOKEN'] = $anonymousLogout['csrfToken'];
     $anonymousLogoutLimited = false;
-    try { $auth->logout(); }
-    catch (ApiProblemException $e) { $anonymousLogoutLimited = $e->httpStatus === 429 && isset($e->responseHeaders['Retry-After']); }
-    $assert(($anonymousLogout['authenticated'] ?? true) === false && $anonymousLogoutLimited, 'anonymous session churn is rate-limited while authenticated logout remains unblocked');
+    for ($attempt = 0; $attempt < 5 && !$anonymousLogoutLimited; $attempt++) {
+        $_SERVER['HTTP_X_CSRF_TOKEN'] = Csrf::token();
+        try { $auth->logout(); }
+        catch (ApiProblemException $e) {
+            $anonymousLogoutLimited = $e->httpStatus === 429 && isset($e->responseHeaders['Retry-After']);
+        }
+    }
+    $assert(($anonymousLogout['authenticated'] ?? true) === false && $anonymousLogoutLimited, 'anonymous session churn is rate-limited while authenticated logout remains unblocked at the configured minimum');
 
     $testPassed = true;
 } catch (Throwable $exception) {
-    fwrite(STDERR, 'FAIL: Wave 3 auth database integration; exception_type=' . get_class($exception) . PHP_EOL);
+    // Report only the source location and exception class; never disclose credentials or test data.
+    $origin = basename($exception->getFile()) . ':' . $exception->getLine();
+    fwrite(STDERR, 'FAIL: Wave 3 auth database integration; exception_type=' . get_class($exception) . '@' . $origin . PHP_EOL);
     $exit = 1;
 } finally {
     if ($pdo instanceof PDO) {

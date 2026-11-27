@@ -40,12 +40,42 @@ jobs:
           chmod 0755 "$workdir/bin/gitleaks"
           echo "$workdir/bin" >> "$GITHUB_PATH"
           "$workdir/bin/gitleaks" version
+          cat > "$workdir/safe-report.tmpl" <<'TEMPLATE'
+          {{- range . -}}
+          {{ .RuleID }} | {{ .File }}:{{ .StartLine }}-{{ .EndLine }} | commit={{ .Commit }} | fingerprint={{ .Fingerprint }}{{ printf "\n" }}
+          {{- end -}}
+          TEMPLATE
+          echo "GITLEAKS_SAFE_TEMPLATE=$workdir/safe-report.tmpl" >> "$GITHUB_ENV"
 
-      - name: Scan current working tree (100% redacted)
-        run: gitleaks dir --redact=100 --exit-code 1 .
+      - name: Scan current working tree (100% redacted; safe finding locations)
+        shell: bash
+        run: |
+          set +e
+          report_path="$RUNNER_TEMP/gitleaks-working-tree-safe.txt"
+          gitleaks dir --redact=100 --exit-code 1 --report-format template \
+            --report-template "$GITLEAKS_SAFE_TEMPLATE" --report-path "$report_path" .
+          scan_status=$?
+          set -e
+          if [[ -s "$report_path" ]]; then
+            echo "Sanitized finding metadata only (rule, file, line; no matched content):"
+            cat "$report_path"
+          fi
+          exit "$scan_status"
 
-      - name: Scan all available Git history (100% redacted)
-        run: gitleaks git --redact=100 --exit-code 1 .
+      - name: Scan all available Git history (100% redacted; safe finding locations)
+        shell: bash
+        run: |
+          set +e
+          report_path="$RUNNER_TEMP/gitleaks-history-safe.txt"
+          gitleaks git --redact=100 --exit-code 1 --report-format template \
+            --report-template "$GITLEAKS_SAFE_TEMPLATE" --report-path "$report_path" .
+          scan_status=$?
+          set -e
+          if [[ -s "$report_path" ]]; then
+            echo "Sanitized history finding metadata only (rule, file, line; no matched content):"
+            cat "$report_path"
+          fi
+          exit "$scan_status"
 
   static-and-unit:
     runs-on: ubuntu-latest
@@ -89,6 +119,20 @@ jobs:
         run: python3 tools/wave3_static_checks.py .
       - name: Wave 3 local HTTP smoke contracts
         run: python3 tests/Integration/run-wave3-http-smoke.py
+      - name: Registration DTO and validation regression contracts
+        run: php tests/Unit/run-registration-tests.php
+      - name: Wave 4 OTP unit contracts
+        run: php tests/Unit/run-w4p3-unit.php
+      - name: Wave 4 email/Telegram adapter unit contracts
+        run: php tests/Unit/run-w4p4-unit.php
+      - name: Wave 4 recovery unit contracts
+        run: php tests/Unit/run-w4p5-unit.php
+      - name: Wave 4 password policy UI contract
+        run: node tests/Unit/run-w4p6b-password-policy-tests.mjs
+      - name: Pre-Wave 8 regression contracts
+        run: php tests/Unit/run-pre-wave8-bugfix-tests.php
+      - name: Wave 5 project creation and idempotency mock contracts
+        run: php tests/Unit/run-w5p1-project-creation-tests.php
 
   mariadb-integration:
     runs-on: ubuntu-latest

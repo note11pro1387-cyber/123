@@ -7,7 +7,7 @@ final class IntegrityChecker
     {
     }
 
-    public function run(): array
+    public function run(bool $includeNativeTableChecks = true): array
     {
         $report = [
             'engine_version' => null,
@@ -102,23 +102,33 @@ final class IntegrityChecker
             $report['indexes'][$table] = ['required' => $required, 'missing' => $missing];
             if ($missing !== []) $report['failures'][] = 'MISSING_INDEXES:' . $table;
         }
-        foreach ($expectedTables as $table) {
-            if (!isset($present[$table])) continue;
-            try {
-                $checkRows = $this->pdo->query('CHECK TABLE `' . $table . '`')->fetchAll();
-                $messages = [];
-                $ok = $checkRows !== [];
-                foreach ($checkRows as $checkRow) {
-                    $type = strtolower((string) ($checkRow['Msg_type'] ?? ''));
-                    $message = (string) ($checkRow['Msg_text'] ?? '');
-                    $messages[] = ['type' => $type, 'message' => preg_replace('/[^A-Za-z0-9 _.,:+()-]/', '', $message)];
-                    if ($type === 'error' || $type === 'warning' || ($type === 'status' && strtoupper($message) !== 'OK')) $ok = false;
+        if ($includeNativeTableChecks) {
+            // MariaDB CHECK TABLE implicitly commits an active transaction. Callers that
+            // need atomic data writes must run this physical check before beginning them.
+            foreach ($expectedTables as $table) {
+                if (!isset($present[$table])) continue;
+                try {
+                    $checkRows = $this->pdo->query('CHECK TABLE `' . $table . '`')->fetchAll();
+                    $messages = [];
+                    $ok = $checkRows !== [];
+                    foreach ($checkRows as $checkRow) {
+                        $type = strtolower((string) ($checkRow['Msg_type'] ?? ''));
+                        $message = (string) ($checkRow['Msg_text'] ?? '');
+                        $messages[] = ['type' => $type, 'message' => preg_replace('/[^A-Za-z0-9 _.,:+()-]/', '', $message)];
+                        if ($type === 'error' || $type === 'warning' || ($type === 'status' && strtoupper($message) !== 'OK')) $ok = false;
+                    }
+                    $report['native_table_checks'][$table] = ['status' => $ok ? 'PASS' : 'FAIL', 'messages' => $messages];
+                    if (!$ok) $report['failures'][] = 'NATIVE_TABLE_CHECK_FAILED:' . $table;
+                } catch (Throwable) {
+                    $report['native_table_checks'][$table] = ['status' => 'NOT_SUPPORTED_OR_FAILED', 'messages' => []];
+                    $report['failures'][] = 'NATIVE_TABLE_CHECK_UNAVAILABLE:' . $table;
                 }
-                $report['native_table_checks'][$table] = ['status' => $ok ? 'PASS' : 'FAIL', 'messages' => $messages];
-                if (!$ok) $report['failures'][] = 'NATIVE_TABLE_CHECK_FAILED:' . $table;
-            } catch (Throwable) {
-                $report['native_table_checks'][$table] = ['status' => 'NOT_SUPPORTED_OR_FAILED', 'messages' => []];
-                $report['failures'][] = 'NATIVE_TABLE_CHECK_UNAVAILABLE:' . $table;
+            }
+        } else {
+            foreach ($expectedTables as $table) {
+                if (isset($present[$table])) {
+                    $report['native_table_checks'][$table] = ['status' => 'SKIPPED_TRANSACTION_SAFE_RESTORE', 'messages' => []];
+                }
             }
         }
 

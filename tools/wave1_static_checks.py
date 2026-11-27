@@ -396,13 +396,34 @@ def main() -> int:
     require("MRNEON_BACKUP_DIR=\n" in env_example,
             "MRNEON_BACKUP_DIR stays empty in the portable template")
 
+    gitleaks_ignore_path = root / ".gitleaksignore"
+    expected_historical_fixtures = {
+        "af595257c9cf90bfc273c7d1f28353f5aba6c25f:tests/Unit/run-wave3-unit.php:generic-api-key:36",
+        "af595257c9cf90bfc273c7d1f28353f5aba6c25f:.env.example:generic-api-key:29",
+        "af595257c9cf90bfc273c7d1f28353f5aba6c25f:tests/Integration/run-wave3-auth-db-integration.php:generic-api-key:61",
+    }
+    ignored_fingerprints = {
+        line.strip() for line in gitleaks_ignore_path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    } if gitleaks_ignore_path.is_file() else set()
+    require(
+        ignored_fingerprints == expected_historical_fixtures,
+        "Gitleaks history exceptions are limited to three exact verified RFC/empty-template fixtures; real credentials remain scanned",
+    )
+
     workflow_path = root / ".github/workflows/ci.yml"
     workflow = workflow_path.read_text(encoding="utf-8") if workflow_path.is_file() else ""
     require("tools/wave1_static_checks.py" in workflow, "baseline CI runs the Wave 1 static contract checker")
     require(workflow_path.is_file(), "baseline PHP/JavaScript CI template exists")
-    require("gitleaks dir --redact=100 --exit-code 1 ." in workflow
-            and "gitleaks git --redact=100 --exit-code 1 ." in workflow,
-            "CI includes fully redacted Gitleaks directory and Git-history scans")
+    require(
+        "gitleaks dir --redact=100 --exit-code 1" in workflow
+        and "gitleaks git --redact=100 --exit-code 1" in workflow
+        and "--report-format template" in workflow
+        and '--report-template "$GITLEAKS_SAFE_TEMPLATE"' in workflow
+        and "--report-path \"$report_path\"" in workflow
+        and all(token in workflow for token in ["{{ .RuleID }}", "{{ .File }}", "{{ .StartLine }}", "{{ .EndLine }}", "{{ .Commit }}", "{{ .Fingerprint }}"])
+        and all(token not in workflow for token in ["{{ .Match }}", "{{ .Secret }}", "{{ .Line }}"]),
+        "CI runs fail-closed redacted Gitleaks scans and exposes only safe rule/file/line diagnostics")
     require(
         'release_url="https://github.com/gitleaks/gitleaks/releases/download/v8.30.1"' in workflow
         and 'gitleaks_8.30.1_checksums.txt' in workflow

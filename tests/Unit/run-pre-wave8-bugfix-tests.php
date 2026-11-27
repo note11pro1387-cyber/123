@@ -159,7 +159,7 @@ $assert(is_string($adminFragment) && preg_match('/id="adminDataModal"[\\s\\S]{0,
 $assert(is_string($adminJsSource) && str_contains($adminJsSource, 'ADMIN_DOM.adminDataModal.hidden = false') && str_contains($adminJsSource, 'ADMIN_DOM.adminDataModal.hidden = true'), 'Admin UI synchronizes native hidden state when opening and closing');
 $assert(is_string($adminCss) && str_contains($adminCss, '.admin-data-modal[hidden]') && str_contains($adminCss, 'display: none !important'), 'Admin data modal CSS makes hidden state authoritative');
 
-$wave8 = file_get_contents($root . '/MR-NEON-CONTINUATION-LEDGER.md');
-$assert(is_string($wave8), 'continuation ledger remains available for Wave 8 handoff');
+// The historical continuation ledger is now delivered in the external handoff ZIP, not the active source tree.
+// This product unit test must not depend on a packaging-only archive file.
 
 echo 'PASS: ' . $checks . " pre-Wave8 unit/static assertions; no DB/provider/HTTP cleanup executed.\n";
