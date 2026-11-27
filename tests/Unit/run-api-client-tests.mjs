@@ -28,6 +28,7 @@ globalThis.fetch = async (input, init) => {
   }
   return jsonResponse({ type: 'urn:mr-neon:problem:forbidden', title: 'Forbidden', status: 403, detail: 'Synthetic rejection', code: 'FORBIDDEN', requestId: 'synthetic-forbidden-id' }, 403, 'application/problem+json; charset=utf-8');
 };
+const apiFetchMock = globalThis.fetch;
 
 client.configureApiEndpoint('api.php');
 assert.throws(() => client.configureApiEndpoint('https://cross-origin.synthetic.test/api.php'), /same-origin/);
@@ -62,6 +63,8 @@ await assert.rejects(
   client.fetchSameOriginResource('../assets/data/neo-catalog.json'),
   (error) => error instanceof client.ApiError && error.code === 'INVALID_RESOURCE_CONTENT_TYPE',
 );
+globalThis.fetch = apiFetchMock;
+calls = [];
 client.clearApiClientState();
 const data = await client.apiRequest('login', { method: 'POST', body: { username: 'synthetic_user', password: 'synthetic-only' } });
 assert.equal(data.authenticated, true);

@@ -406,7 +406,7 @@ def main() -> int:
         and "--report-format template" in workflow
         and '--report-template "$GITLEAKS_SAFE_TEMPLATE"' in workflow
         and "--report-path \"$report_path\"" in workflow
-        and all(token in workflow for token in ["{{ .RuleID }}", "{{ .File }}", "{{ .StartLine }}", "{{ .EndLine }}"])
+        and all(token in workflow for token in ["{{ .RuleID }}", "{{ .File }}", "{{ .StartLine }}", "{{ .EndLine }}", "{{ .Commit }}", "{{ .Fingerprint }}"])
         and all(token not in workflow for token in ["{{ .Match }}", "{{ .Secret }}", "{{ .Line }}"]),
         "CI runs fail-closed redacted Gitleaks scans and exposes only safe rule/file/line diagnostics")
     require(

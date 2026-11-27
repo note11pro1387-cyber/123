@@ -42,7 +42,7 @@ jobs:
           "$workdir/bin/gitleaks" version
           cat > "$workdir/safe-report.tmpl" <<'TEMPLATE'
           {{- range . -}}
-          {{ .RuleID }} | {{ .File }}:{{ .StartLine }}-{{ .EndLine }}{{ "\\n" }}
+          {{ .RuleID }} | {{ .File }}:{{ .StartLine }}-{{ .EndLine }} | commit={{ .Commit }} | fingerprint={{ .Fingerprint }}{{ printf "\n" }}
           {{- end -}}
           TEMPLATE
           echo "GITLEAKS_SAFE_TEMPLATE=$workdir/safe-report.tmpl" >> "$GITHUB_ENV"
