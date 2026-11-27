@@ -18,7 +18,7 @@ import {
 } from "./app.js";
 
 import { AuthSystem } from "./auth.js";
-import { apiFetch, getServerSession } from "./api-client.js";
+import { apiFetch, fetchSameOriginResource, getServerSession } from "./api-client.js";
 
 const PROJECT_SUBMISSION_IDEMPOTENCY_SAFE_RETRY_WINDOW_MS = 22 * 60 * 60 * 1000;
 
@@ -382,10 +382,7 @@ async function ensureNeoCatalogLoaded() {
   if (neoCatalogLoaded) return;
   if (!neoCatalogPromise) {
     neoCatalogPromise = (async () => {
-      const response = await fetch(NEO_CATALOG_URL.href, {
-        method: "GET",
-        credentials: "same-origin",
-        cache: "no-store",
+      const response = await fetchSameOriginResource(NEO_CATALOG_URL.href, {
         headers: { Accept: "application/json" },
       });
       if (!response.ok) throw new Error("فهرست استاندارد گزینه‌های NEO دریافت نشد.");

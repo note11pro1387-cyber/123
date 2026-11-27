@@ -227,6 +227,75 @@ export async function getServerSession() {
   return apiRequest("getSession", { method: "GET" });
 }
 
+/**
+ * Fetches a same-origin public resource (for example, the versioned NEO JSON catalog).
+ * This is deliberately GET-only and shares the API client's origin, credential, timeout,
+ * redirect, cache and error-handling boundaries without pretending a static asset is an API action.
+ */
+export async function fetchSameOriginResource(input, { signal, timeoutMs = 15000, headers = {} } = {}) {
+  const resourceUrl = new URL(typeof input === "string" ? input : input?.url, document.baseURI);
+  if (resourceUrl.origin !== window.location.origin
+      || !["http:", "https:"].includes(resourceUrl.protocol)
+      || resourceUrl.username !== ""
+      || resourceUrl.password !== "") {
+    throw new ApiError("دریافت منبع باید از مبدأ امن و یکسان انجام شود.", { code: "CROSS_ORIGIN_RESOURCE_REJECTED" });
+  }
+
+  const requestHeaders = new Headers(headers);
+  if (!requestHeaders.has("Accept")) requestHeaders.set("Accept", "application/json");
+
+  const controller = new AbortController();
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, Math.min(Math.max(timeoutMs, 1000), 60000));
+  const abortFromCaller = () => controller.abort(signal?.reason);
+  if (signal?.aborted) abortFromCaller();
+  else signal?.addEventListener("abort", abortFromCaller, { once: true });
+
+  let response;
+  try {
+    response = await fetch(resourceUrl.href, {
+      method: "GET",
+      headers: requestHeaders,
+      credentials: "same-origin",
+      cache: "no-store",
+      redirect: "error",
+      referrerPolicy: "same-origin",
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (timedOut) {
+      throw new ApiError("دریافت منبع در زمان مجاز انجام نشد.", { code: "RESOURCE_TIMEOUT" });
+    }
+    if (signal?.aborted || error?.name === "AbortError") {
+      throw new ApiError("دریافت منبع لغو شد.", { code: "RESOURCE_ABORTED" });
+    }
+    throw new ApiError("ارتباط با منبع عمومی برقرار نشد.", { code: "RESOURCE_NETWORK_ERROR" });
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener("abort", abortFromCaller);
+  }
+
+  if (!response.ok) {
+    throw new ApiError("منبع عمومی قابل دریافت نیست.", {
+      status: response.status,
+      code: "RESOURCE_FETCH_FAILED",
+      requestId: response.headers.get("X-Request-ID"),
+    });
+  }
+  const contentType = (response.headers.get("Content-Type") || "").toLowerCase();
+  if (!contentType.includes("application/json")) {
+    throw new ApiError("منبع عمومی در قالب JSON معتبر نیست.", {
+      status: response.status,
+      code: "INVALID_RESOURCE_CONTENT_TYPE",
+      requestId: response.headers.get("X-Request-ID"),
+    });
+  }
+  return response;
+}
+
 export function clearApiClientState() {
   csrfToken = null;
 }

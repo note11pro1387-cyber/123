@@ -31,12 +31,49 @@ globalThis.fetch = async (input, init) => {
 
 client.configureApiEndpoint('api.php');
 assert.throws(() => client.configureApiEndpoint('https://cross-origin.synthetic.test/api.php'), /same-origin/);
+
+client.clearApiClientState();
+calls = [];
+globalThis.fetch = async (input, init) => {
+  calls.push({ url: new URL(input).href, init });
+  return new Response(JSON.stringify({ catalogVersion: 'synthetic-catalog-v1' }), {
+    status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8' },
+  });
+};
+const publicResource = await client.fetchSameOriginResource('../assets/data/neo-catalog.json');
+assert.equal(publicResource.ok, true);
+assert.deepEqual(await publicResource.json(), { catalogVersion: 'synthetic-catalog-v1' });
+assert.equal(calls.length, 1, 'same-origin public resource is fetched exactly once');
+assert.equal(calls[0].init.method, 'GET');
+assert.equal(calls[0].init.credentials, 'same-origin');
+assert.equal(calls[0].init.cache, 'no-store');
+assert.equal(calls[0].init.redirect, 'error');
+assert.equal(new Headers(calls[0].init.headers).get('Accept'), 'application/json');
+await assert.rejects(
+  client.fetchSameOriginResource('https://cross-origin.synthetic.test/assets/data/neo-catalog.json'),
+  (error) => error instanceof client.ApiError && error.code === 'CROSS_ORIGIN_RESOURCE_REJECTED',
+);
+assert.equal(calls.length, 1, 'cross-origin resource is rejected before network access');
+
+globalThis.fetch = async () => new Response('<html>synthetic resource</html>', {
+  status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' },
+});
+await assert.rejects(
+  client.fetchSameOriginResource('../assets/data/neo-catalog.json'),
+  (error) => error instanceof client.ApiError && error.code === 'INVALID_RESOURCE_CONTENT_TYPE',
+);
 client.clearApiClientState();
 const data = await client.apiRequest('login', { method: 'POST', body: { username: 'synthetic_user', password: 'synthetic-only' } });
 assert.equal(data.authenticated, true);
 assert.equal(calls.length, 2, 'CSRF bootstrap and mutation should issue exactly two requests, with no retry');
 assert.deepEqual(calls.map((item) => item.action), ['getSession', 'login']);
 
+globalThis.fetch = async (input, init) => {
+  const url = new URL(input);
+  const action = url.searchParams.get('action');
+  calls.push({ action, init });
+  return jsonResponse({ type: 'urn:mr-neon:problem:forbidden', title: 'Forbidden', status: 403, detail: 'Synthetic rejection', code: 'FORBIDDEN', requestId: 'synthetic-forbidden-id' }, 403, 'application/problem+json; charset=utf-8');
+};
 await assert.rejects(
   client.apiRequest('getAll', { method: 'GET' }),
   (error) => error instanceof client.ApiError && error.status === 403 && error.code === 'FORBIDDEN' && error.requestId === 'synthetic-forbidden-id',

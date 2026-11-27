@@ -121,15 +121,31 @@ final class MigrationRunner
                 if (!is_string($sql) || trim($sql) === '') {
                     throw new RuntimeException('A pending migration became unreadable: ' . $migration['name']);
                 }
-                if (!preg_match('/^\s*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-z_]+)`?/i', $sql, $tableMatch)) {
-                    throw new RuntimeException('Migration must contain one CREATE TABLE statement: ' . $migration['name']);
+                $statement = trim($sql);
+                if (substr_count($statement, ';') !== 1 || !str_ends_with($statement, ';')) {
+                    throw new RuntimeException('Migration must contain exactly one SQL statement: ' . $migration['name']);
                 }
+
+                $statementType = null;
+                if (preg_match('/^\s*CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-z_]+)`?/i', $statement, $tableMatch)) {
+                    $statementType = 'create';
+                } elseif (preg_match('/^\s*ALTER\s+TABLE\s+`?([a-z_]+)`?\s+/i', $statement, $tableMatch)) {
+                    $statementType = 'alter';
+                } else {
+                    throw new RuntimeException('Migration must contain one supported CREATE TABLE or ALTER TABLE statement: ' . $migration['name']);
+                }
+
                 $targetTable = strtolower($tableMatch[1]);
-                if ($migration['version'] !== '001' && $this->tableExists($targetTable)) {
+                $targetExists = $this->tableExists($targetTable);
+                if ($statementType === 'create' && $migration['version'] !== '001' && $targetExists) {
                     throw new RuntimeException('MIGRATION_TABLE_EXISTS_UNRECORDED:' . $targetTable);
                 }
+                if ($statementType === 'alter' && !$targetExists) {
+                    throw new RuntimeException('MIGRATION_TABLE_MISSING:' . $targetTable);
+                }
                 $start = microtime(true);
-                // Each migration file is exactly one CREATE TABLE statement. MySQL/MariaDB DDL may auto-commit.
+                // Each migration file is exactly one supported CREATE TABLE or ALTER TABLE statement.
+                // MySQL/MariaDB DDL may auto-commit, so existence and checksum guards run before execution.
                 $this->pdo->exec($sql);
                 $elapsedMs = max(0, (int) round((microtime(true) - $start) * 1000));
                 $statement = $this->pdo->prepare(

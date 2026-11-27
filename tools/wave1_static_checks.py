@@ -400,9 +400,15 @@ def main() -> int:
     workflow = workflow_path.read_text(encoding="utf-8") if workflow_path.is_file() else ""
     require("tools/wave1_static_checks.py" in workflow, "baseline CI runs the Wave 1 static contract checker")
     require(workflow_path.is_file(), "baseline PHP/JavaScript CI template exists")
-    require("gitleaks dir --redact=100 --exit-code 1 ." in workflow
-            and "gitleaks git --redact=100 --exit-code 1 ." in workflow,
-            "CI includes fully redacted Gitleaks directory and Git-history scans")
+    require(
+        "gitleaks dir --redact=100 --exit-code 1" in workflow
+        and "gitleaks git --redact=100 --exit-code 1" in workflow
+        and "--report-format template" in workflow
+        and '--report-template "$GITLEAKS_SAFE_TEMPLATE"' in workflow
+        and "--report-path \"$report_path\"" in workflow
+        and all(token in workflow for token in ["{{ .RuleID }}", "{{ .File }}", "{{ .StartLine }}", "{{ .EndLine }}"])
+        and all(token not in workflow for token in ["{{ .Match }}", "{{ .Secret }}", "{{ .Line }}"]),
+        "CI runs fail-closed redacted Gitleaks scans and exposes only safe rule/file/line diagnostics")
     require(
         'release_url="https://github.com/gitleaks/gitleaks/releases/download/v8.30.1"' in workflow
         and 'gitleaks_8.30.1_checksums.txt' in workflow
