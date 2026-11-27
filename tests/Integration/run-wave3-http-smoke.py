@@ -107,11 +107,11 @@ try:
 
     status, headers, body = request(opener, base + "/api.php?action=sendMessage", method="POST", payload={"message": "synthetic"})
     err = json.loads(body)
-    assert_true(status == 401 and err.get("code") == "AUTH_REQUIRED", "customer message action rejects guest before its not-implemented response")
+    assert_true(status == 403 and err.get("code") == "CSRF_VALIDATION_FAILED", "customer message mutation rejects a request without session-bound CSRF before authorization or write")
 
     status, headers, body = request(opener, base + "/api.php?action=saveNeo", method="POST", payload={"synthetic": True})
     err = json.loads(body)
-    assert_true(status == 401 and err.get("code") == "AUTH_REQUIRED", "NEO save action rejects guest before its disabled domain gate")
+    assert_true(status == 403 and err.get("code") == "CSRF_VALIDATION_FAILED", "NEO creation rejects a request without session-bound CSRF before DTO processing or write")
 
     status, headers, body = request(opener, base + "/api.php?action=getAll")
     err = json.loads(body)
