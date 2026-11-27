@@ -166,6 +166,14 @@ final class BackupManager
             }
         }
 
+        // CHECK TABLE is an administrative statement that implicitly commits in MariaDB.
+        // Run physical table checks before the restore transaction, while the target is still empty.
+        $preRestoreIntegrity = (new IntegrityChecker($this->pdo, $this->migrationDirectory))->run();
+        if ($preRestoreIntegrity['status'] !== 'PASS') {
+            gzclose($handle);
+            throw new RuntimeException('Restore target failed pre-restore schema and native integrity checks.');
+        }
+
         $expectedCounts = array_fill_keys(SchemaCatalog::tables(), 0);
         $observedCounts = array_fill_keys(SchemaCatalog::tables(), 0);
         $lastOrder = -1;
@@ -218,8 +226,10 @@ final class BackupManager
                 $actual = (int) $this->pdo->query('SELECT COUNT(*) FROM `' . $table . '`')->fetchColumn();
                 if ($actual !== (int) ($expectedCounts[$table] ?? -1)) throw new RuntimeException('Restored row count mismatch in table ' . $table . '.');
             }
-            $integrity = (new IntegrityChecker($this->pdo, $this->migrationDirectory))->run();
-            if ($integrity['status'] !== 'PASS') throw new RuntimeException('Post-restore integrity checks failed; restore transaction rolled back.');
+            // Keep relational, uniqueness, row-count and schema checks inside the transaction.
+            // Native CHECK TABLE was already run before BEGIN because MariaDB implicitly commits it.
+            $integrity = (new IntegrityChecker($this->pdo, $this->migrationDirectory))->run(false);
+            if ($integrity['status'] !== 'PASS') throw new RuntimeException('Post-restore transactional integrity checks failed; restore transaction rolled back.');
             $this->pdo->commit();
             gzclose($handle);
             return [
